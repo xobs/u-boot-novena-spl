@@ -692,6 +692,88 @@ MV_BOARD_INFO rd88ap510AvngInfo = {
 	0,											/* gpp2PolarityVal */
 	NULL										/* pSwitchInfo */
 };
+//----------------------------------------------------------------------------------------
+//Cubox 
+#define CUBOX_BOARD_PCI_IF_NUM				0x0
+#define CUBOX_BOARD_TWSI_DEF_NUM			0x2
+#define CUBOX_BOARD_MAC_INFO_NUM			0x1
+#define CUBOX_BOARD_GPP_INFO_NUM			0x0
+#define CUBOX_BOARD_MPP_GROUP_TYPE_NUM		0x1
+#define CUBOX_BOARD_MPP_CONFIG_NUM			0x1
+#define CUBOX_BOARD_DEVICE_CONFIG_NUM		0x1
+#define CUBOX_BOARD_DEBUG_LED_NUM			0x0
+
+MV_U8	cuboxInfoBoardDebugLedIf[] =
+	{};
+
+MV_BOARD_MAC_INFO cuboxInfoBoardMacInfo[] = 
+	/* {{MV_BOARD_MAC_SPEED	boardMacSpeed, MV_U8 boardEthSmiAddr}} */
+	{
+		{BOARD_MAC_SPEED_AUTO, 0x1}
+	}; 
+
+MV_BOARD_GPP_INFO cuboxInfoBoardGppInfo[] = 
+	/* {{MV_BOARD_GPP_CLASS	devClass, MV_U8	gppPinNum}} */
+	{
+	};
+
+MV_BOARD_TWSI_INFO	cuboxInfoBoardTwsiDev[] =
+	/* {{MV_BOARD_DEV_CLASS	devClass, MV_U8	twsiDevAddr, MV_U8 twsiDevAddrType}} */
+	{
+	};
+
+MV_BOARD_MPP_TYPE_INFO cuboxInfoBoardMppTypeInfo[] = 
+	/* {{MV_BOARD_MPP_TYPE_CLASS	boardMppGroup1,
+ 		MV_BOARD_MPP_TYPE_CLASS	boardMppGroup2}} */
+	{
+	{MV_BOARD_OTHER, MV_BOARD_OTHER} /* TODO */
+	}; 
+
+MV_BOARD_MPP_INFO	cuboxInfoBoardMppConfigValue[] = 
+	{{{
+	CUBOX_MPP0_7,		
+	CUBOX_MPP8_15,		
+	CUBOX_MPP16_23	
+	}}};
+
+MV_DEV_CS_INFO cuboxInfoBoardDevCsInfo[] = 
+	/*{deviceCS, params, devType, devWidth}*/
+	{
+		{0, N_A, BOARD_DEV_SPI_FLASH, 8}
+	};
+
+
+
+MV_BOARD_INFO cuboxInfo = {
+	"CuBox",				/* boardName[MAX_BOARD_NAME_LEN] */
+	CUBOX_BOARD_MPP_GROUP_TYPE_NUM,	/* numBoardMppGroupType */
+	cuboxInfoBoardMppTypeInfo,
+	CUBOX_BOARD_MPP_CONFIG_NUM,		/* numBoardMppConfig */
+	cuboxInfoBoardMppConfigValue,
+	0,											/* intsGppMaskLow */
+	0,											/* intsGppMaskHigh */
+	CUBOX_BOARD_DEVICE_CONFIG_NUM,	/* numBoardDevIf */
+	cuboxInfoBoardDevCsInfo,
+	CUBOX_BOARD_TWSI_DEF_NUM,		/* numBoardTwsiDev */
+	cuboxInfoBoardTwsiDev,
+	CUBOX_BOARD_MAC_INFO_NUM,		/* numBoardMacInfo */
+	cuboxInfoBoardMacInfo,
+	CUBOX_BOARD_GPP_INFO_NUM,		/* numBoardGppInfo */
+	cuboxInfoBoardGppInfo,
+	CUBOX_BOARD_DEBUG_LED_NUM,		/* activeLedsNumber */              
+	cuboxInfoBoardDebugLedIf,
+	1,											/* ledsPolarity */		
+	CUBOX_OE_LOW,					/* gppOutEnLow */
+	CUBOX_OE_HIGH,					/* gppOutEnHigh */
+	0xFFFFFFFF,									/* gpp2OutEn */
+	CUBOX_OE_VAL_LOW,				/* gppOutValLow */
+	CUBOX_OE_VAL_HIGH,				/* gppOutValHigh */
+	0,											/* gpp2OutVal */
+	0,											/* gppPolarityValLow */
+	0, 											/* gppPolarityValHigh */
+	0,											/* gpp2PolarityVal */
+	NULL										/* pSwitchInfo */
+};
 
 //----------------------------------------------------------------------------------------
 
@@ -895,6 +977,7 @@ MV_BOARD_INFO*	boardInfoTbl[] = 	{
 					 &db88f6781bpbInfo,
 					 &db88f6781pcacInfo,
 					 &rd88ap510AvngInfo,
+					 &cuboxInfo,
 					};
 
 

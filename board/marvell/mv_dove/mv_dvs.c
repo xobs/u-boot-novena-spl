@@ -31,6 +31,8 @@ disclaimer.
 #include "mv_dvs.h"
 
 extern u32 dvs_values_param;
+MV_STATUS mvPmuDvs(MV_U32 pSet, MV_U32 vSet, MV_U32 rAddr, MV_U32 sAddr);
+MV_VOID mvPmuSelSDI (MV_U8 select);
 
 MV_VOLTAGE_INFO voltStagesArr[VOLT_STAGES_NUM]= {
 	/*value	volt	%		vSet	pSet*/
@@ -175,6 +177,22 @@ MV_STATUS mvPmuInit (MV_PMU_INFO * pmu)
 	return MV_OK;
 }
 
+void optimize_powerrails(void)
+{
+	/* Following is extremely dangerous to play with. Don't touch if you don't know what you are doing !!!! */
+	/* Set core (perihperals to 1.0 -5% */
+	printf ("Modifying CPU/CORE/DDR power rails to 1.0(-2.5%) / 1.0(-5%) / 1.5(-5%)\n");
+	mvPmuSelSDI(9);
+	mvPmuDvs(0xa, 0x9, 0x2, 0x5);
+	udelay(100*1000); /* 100mSec */
+	/* Set DDR to 1.5V -5% */
+	mvPmuDvs(0xa, 0xb, 0x0, 0x5);
+	udelay(100*1000); /* 100 mSec*/
+	/* Set CPU to 1.0V -2.5% */
+	mvPmuSelSDI(10);
+	mvPmuDvs(0xb, 0x9, 0x2, 0x5);
+
+}
 MV_STATUS mvPmuWakeupEventSet (MV_U32 wkupEvents)
 {
 	MV_U32 reg;
@@ -197,9 +215,9 @@ MV_STATUS mvSysPmuInit(void)
 	reg |= 0x300;
 	MV_REG_WRITE(PMU_SIG_SLCT_CTRL_1_REG, reg);
 
-	/* Setting MPP 10 as PMU MPP */
+	/* Setting MPP 9 and 10 as PMU MPP */
 	reg = MV_REG_READ(MPP_GENERAL_CONTROL_REG);
-	reg |= 0x400;
+	reg |= 0x600;
 	MV_REG_WRITE(MPP_GENERAL_CONTROL_REG, reg);
 
 	/* Open PMU DVS int in main cause */
@@ -413,6 +431,37 @@ U_BOOT_CMD(
 	"volt core	- display the core voltage\n"
 );
 
+MV_VOID mvPmuSelSDI (MV_U8 select)
+{
+        MV_U32 reg0, regw0, reg1, regw1;
+        int i;
+        regw0 = reg0 = MV_REG_READ(PMU_SIG_SLCT_CTRL_0_REG);
+        for (i = 0 ; i < 8 ; i++ ) {
+                if ((reg0 & (0xf << (i*4))) == (PMU_SIGNAL_SDI << (i*4))) {
+                        regw0 &= ~(0xf << (i*4));
+                        regw0 |= PMU_SIGNAL_0 << (i*4);
+                }
+        }
+        regw1 = reg1 = MV_REG_READ(PMU_SIG_SLCT_CTRL_1_REG);
+        for (i = 0 ; i < 8 ; i++ ) {
+                if ((reg1 & (0xf << (i*4))) == (PMU_SIGNAL_SDI << (i*4))) {
+                        regw1 &= ~(0xf << (i*4));
+                        regw1 |= PMU_SIGNAL_0 << (i*4);
+                }
+        }
+        if (select < 8) 
+                regw0 = regw0 | (PMU_SIGNAL_SDI << (select * 4));
+        if ((select >=8) && (select < 16)) 
+        regw1 = regw1 | (PMU_SIGNAL_SDI << ((select-8) * 4));
+done:   if (regw0 != reg0) {
+                MV_REG_WRITE(PMU_SIG_SLCT_CTRL_0_REG, regw0);
+        }
+        if (regw1 != reg1)
+        {
+                MV_REG_WRITE(PMU_SIG_SLCT_CTRL_1_REG, regw1);
+        }
+}
+
 #define PMU_DVS_POLL_DLY		100000			/* Poll DVS done count */
 MV_STATUS mvPmuDvs(MV_U32 pSet, MV_U32 vSet, MV_U32 rAddr, MV_U32 sAddr)
 {
@@ -579,7 +628,7 @@ MV_STATUS mvDvsToTarget(char *cmd, int target)
 	}
 	return MV_OK;
 }
-
+#if 0
 int dvs_cmd( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	char *cmd;
@@ -612,3 +661,46 @@ U_BOOT_CMD(
 	"dvs core <target> - dvs core to target voltage, <target> in mili-voltage \n"
 	"					for example: dvs core 960\n"
 );
+#else
+int dvs_cmd( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	char *cmd;
+	int pset;
+	if (argc < 3)
+		goto usage;
+
+	cmd = argv[1];
+
+	if (strncmp(cmd, "cpu", 3) != 0 && strncmp(cmd, "core", 4) != 0 && strncmp(cmd, "ddr", 3) != 0 )
+		goto usage;
+	
+	pset = (int)simple_strtoul(argv[2], NULL, 10);
+	if ((pset < 8) || (pset > 15)) goto usage;
+	printf ("Was asked to set %s power rail to pset %d\n",argv[1],pset);
+	if (!strncmp(cmd, "cpu", 3)) {
+		mvPmuSelSDI(10);
+		mvPmuDvs(pset, 0x9, 0x2, 0x5);
+	}
+	if (!strncmp(cmd, "core", 4)) {
+		mvPmuSelSDI(9);
+		mvPmuDvs(pset, 0x9, 0x2, 0x5);
+	}
+	if (!strncmp(cmd, "ddr", 3)) {
+		if (pset > 11) goto usage;
+		mvPmuSelSDI(9);
+		mvPmuDvs(pset, 0xb, 0x0, 0x5);
+	}
+
+	return 0;
+usage:
+		printf("Usage:\n%s\n", cmdtp->usage);
+	return 1;
+}
+U_BOOT_CMD(
+	dvs,      3,     1,      dvs_cmd,
+	"     dvs   - set the cpu/core(perihperals)/ddr pset value of the power rails voltages.\n",
+	"dvs cpu <pset>  - dvs cpu to pset (vset=1.0V)\n"
+	"dvs core <pset> - dvs core to pset (vset=1.0V)\n"
+	"dvs ddr <pset>  - dvs ddr to pset (vset=1.5V)\n"
+);
+#endif

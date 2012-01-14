@@ -302,6 +302,7 @@ DRAMREGS_SAMSUNG_1G = ./tools/doimage_dove/dramregs/dramregs_avng_x0_2cs_fast_ba
 DRAMREGS_SAMSUNG_2G = ./tools/doimage_dove/dramregs/dramregs_avng_x0_2cs_fast_bank_en_samsung_2Gb.txt
 DRAMREGS_1CS = ./tools/doimage_dove/dramregs/dramregs_db_x0_dec_6_1cs.txt
 DRAMREGS_2G_2CS = ./tools/doimage_dove/dramregs/dramregs_avng_a0_2cs_fast_bank_en_samsung_2Gb.txt
+DRAMREGS_CUBOX = ./tools/doimage_dove/dramregs/dramregs_cubox.txt
 ifeq ($(DRAM_256M),y)
 DRAMREGS_2CS = ./tools/doimage_dove/dramregs/dramregs_db_x0_dec_6_2cs_256mb.txt
 else
@@ -361,6 +362,13 @@ ifeq ($(CONFIG_DOVE),y)
 				-B ./tools/binary_hdr.bin -R $(DRAMREGS_SAMSUNG_2G) u-boot.bin u-boot-$(MV_OUTPUT)_samsung_2g$(MV_NAND_GANG_MODE)_spi.bin
 			DO_IMAGE_UART = ./tools/doimage -T uart -D 0x600000 -E 0x6A0000 \
 				-R $(DRAMREGS_UART) u-boot.bin u-boot-$(MV_OUTPUT)_samsung_2g$(MV_NAND_GANG_MODE)_uart.bin
+		endif
+		ifeq ($(DRAM),HYNIX_CUBOX)	
+			DO_IMAGE = ./tools/doimage -T flash -D 0x600000 -E 0x650000 \
+				-R $(DRAMREGS_CUBOX) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox$(MV_NAND_GANG_MODE)_spi.bin
+			DO_IMAGE_UART = ./tools/doimage -T uart -D 0x600000 -E 0x650000 \
+				-R $(DRAMREGS_CUBOX) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox$(MV_NAND_GANG_MODE)_uart.bin
+
 		endif
 	endif
 endif
@@ -3033,7 +3041,8 @@ db88ap510_pcac_config \
 rd88ap510sheevaplug_config \
 rd88ap510avng_config \
 rd88ap510_avng_v3.x_config \
-rd_avng88f6781y1_config: 
+rd_avng88f6781y1_config	\
+cubox_config: 
 	@$(MAKE) -s mv_dove RULE=$@
 mv_dove:	unconfig
 	@mkdir -p $(obj)include
@@ -3062,6 +3071,10 @@ mv_dove:	unconfig
 		echo "#define CONFIG_DOVE_REV_X0" >>$(obj)include/config.h ;	\
 		echo "  * Configured for 88AP510"; \
 	elif [ "$(findstring 88ap510,$(RULE))" ] ; then\
+		echo "#define MV88F6781X0" >>$(obj)include/config.h ;	\
+		echo "#define CONFIG_DOVE_REV_X0" >>$(obj)include/config.h ;	\
+		echo "  * Configured for 88AP510"; \
+	elif [ "$(findstring cubox_config,$(RULE))" ] ; then\
 		echo "#define MV88F6781X0" >>$(obj)include/config.h ;	\
 		echo "#define CONFIG_DOVE_REV_X0" >>$(obj)include/config.h ;	\
 		echo "  * Configured for 88AP510"; \
@@ -3147,6 +3160,13 @@ mv_dove:	unconfig
 		echo "#define MV_LARGE_PAGE" >> $(obj)include/config.h ;	\
 		echo "#define MV_DRAM_X0_SUPPORT" >> $(obj)include/config.h ;	\
 		echo "  * Configured for RD-88AP510-A0 AVNG"; \
+	elif [ "$(findstring cubox_config,$(RULE))" ] ; then\
+		echo "#define CUBOX" >> $(obj)include/config.h ;	\
+		echo "#define MV_SEC_64K" >> $(obj)include/config.h ;	\
+		echo "#define MV_BOOTSIZE_4M" >> $(obj)include/config.h ;	\
+		echo "#define MV_LARGE_PAGE" >> $(obj)include/config.h ;	\
+		echo "#define MV_DRAM_X0_SUPPORT" >> $(obj)include/config.h ;	\
+		echo "  * Configured for CuBox"; \
 	elif [ "$(findstring rd_avng88f6781y1_config,$(RULE))" ] ; then \
 		echo "#define RD_88F6781Y0_AVNG" >> $(obj)include/config.h;  \
 		echo "#define MV_SEC_64K" >> $(obj)include/config.h;	\
@@ -3195,6 +3215,11 @@ ifeq ($(DRAM),SAMSUNG_2G_A0)
 	@echo "  * SAMSUNG-2G-A0 Support" ;
 	@echo "#define MV_DRAM_SAMSUNG_2G_A0" >> $(obj)include/config.h;
 	@echo "DRAM = SAMSUNG_2G_A0" >> $(obj)include/config.mk;
+endif
+ifeq ($(DRAM),HYNIX_CUBOX)
+	@echo "  * HYNIX DDR-3 CuBox Support" ;
+	@echo "#define MV_DRAM_HYNIX_CUBOX" >> $(obj)include/config.h;
+	@echo "DRAM = HYNIX_CUBOX" >> $(obj)include/config.mk;
 endif
 #=================
 # USB support
@@ -3246,6 +3271,7 @@ ifeq ($(NAND),1)
 		echo "#define MV_NAND_1CS_MODE" >> $(obj)include/config.h ; \
 		echo "      + 12 bit NAND support" ; \
 		echo "#define MV_NAND_12BIT_MODE" >> $(obj)include/config.h ; \
+	elif [ "$(findstring cubox_config,$(RULE))" ] ; then\
 	else \
 		echo "  * Error no board was configured"; \
 	fi;

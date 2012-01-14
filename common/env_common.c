@@ -149,7 +149,11 @@ static uchar env_get_char_init (int index)
 	uchar c;
 
 	/* if crc was bad, use the default environment */
+#if CUBOX_DONT_LOAD_ENV
+	if (1)
+#else
 	if (gd->env_valid)
+#endif
 	{
 		c = env_get_char_spec(index);
 	} else {

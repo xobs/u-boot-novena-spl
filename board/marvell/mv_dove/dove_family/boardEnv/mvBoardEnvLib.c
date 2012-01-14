@@ -1753,6 +1753,8 @@ MV_U32 mvBoardIdGet(MV_VOID)
 		tmpBoardId = RD_88F6781Y0_AVNG_ID;
 		#elif defined(RD_88AP510A0_AVNG)
 		tmpBoardId = RD_88AP510A0_AVNG_ID;
+		#elif defined(CUBOX)
+		tmpBoardId = RD_88AP510A0_CUBOX_ID;
 		#endif
 		gBoardId = tmpBoardId;
 	}

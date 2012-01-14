@@ -58,7 +58,7 @@ SECTIONS
 	.got : { *(.got) }
 
 
-	. = _start + 0xA0000;
+	. = _start + 0x50000;
         .reset_vector_sect : { board/marvell/USP/jump.o (.reset_vector_sect) }
 
 	. = ALIGN(4);

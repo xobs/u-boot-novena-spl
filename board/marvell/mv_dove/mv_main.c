@@ -148,6 +148,7 @@ void print_mvBanner(void)
 	DECLARE_GLOBAL_DATA_PTR;
 	gd->flags |= GD_FLG_SILENT;
 #endif
+#ifndef CUBOX
 	printf("\n");
 	printf(" __   __                      _ _\n");
 	printf("|  \\/  | __ _ _ ____   _____| | |\n");
@@ -159,6 +160,9 @@ void print_mvBanner(void)
 	printf("        | | | |___|  _ \\ / _ \\ / _ \\| __| \n");
 	printf("        | |_| |___| |_) | (_) | (_) | |_ \n");
 	printf("         \\___/    |____/ \\___/ \\___/ \\__| \n");
+#else
+	printf("CuBox\n");
+#endif
 //#if !defined(MV_NAND_BOOT)
 #if defined(MV_INCLUDE_MONT_EXT)
 	if(!enaMonExt())
@@ -460,18 +464,22 @@ void misc_init_r_env(void){
 			board_id = DB_88AP510_PCAC_MLL_ID; 
 			break;
             case(RD_88F6781X0_PLUG_ID):
-            sprintf(tmp_buf,"%d", RD_88F6781X0_PLUG_MLL_ID);
-            board_id = RD_88F6781X0_PLUG_MLL_ID; 
-            break;
-		    case(RD_88F6781Y0_AVNG_ID):
+			sprintf(tmp_buf,"%d", RD_88F6781X0_PLUG_MLL_ID);
+			board_id = RD_88F6781X0_PLUG_MLL_ID; 
+			break;
+	    case(RD_88F6781Y0_AVNG_ID):
 			sprintf(tmp_buf,"%d", RD_88F6781Y0_AVNG_MLL_ID);
 			board_id = RD_88F6781Y0_AVNG_MLL_ID;
 			break;
-			case(RD_88AP510A0_AVNG_ID):
+		case(RD_88AP510A0_AVNG_ID):
 			sprintf(tmp_buf,"%d", RD_88AP510A0_AVNG_MLL_ID);
 			board_id = RD_88AP510A0_AVNG_MLL_ID;
 			break;
-		    default:
+		case(RD_88AP510A0_CUBOX_ID):
+			sprintf(tmp_buf,"%d", RD_88AP510A0_CUBOX_MLL_ID);
+			board_id = RD_88AP510A0_CUBOX_MLL_ID;
+			break;
+		default:
 			sprintf(tmp_buf,"%d", board_id);
 			board_id = board_id; 
 			break;
@@ -690,6 +698,38 @@ ethaddr=${ethaddr} ${netbsd_netconfig}");
         if(!env)
 
 #if defined(CONFIG_SYS_HUSH_PARSER)
+#ifdef CUBOX
+	setenv("bootscript","boot.scr");
+	setenv("loadaddr","0x02000000");
+	setenv("mmc_started","0");
+	setenv("ide_started","0");
+	setenv("usb_started","0");
+	setenv("bootcmd",
+	"for device_name in usb mmc ide ; do "
+		"for partition in 0 1; do "
+			"for directory  in / /boot/;do "
+				"for fstype in ext2 fat; do "
+					"echo ===> Executing ${fstype}load ${device_name} 0:${partition} ${loadaddr} ${directory}${bootscript};"
+					"if itest.s $device_name -eq mmc; then if itest.s $mmc_started -ne 1; then mmcinfo;   setenv mmc_started '1';fi;fi;"
+					"if itest.s $device_name -eq usb; then if itest.s $usb_started -ne 1; then usb start; setenv usb_started '1';fi;fi;"
+					"if itest.s $device_name -eq ide; then if itest.s $ide_started -ne 1; then ide reset; setenv ide_started '1';fi;fi;"
+					"if ${fstype}load ${device_name} 0:${partition} ${loadaddr} ${directory}${bootscript}; then "
+						"source ${loadaddr};"
+					"fi;"
+					"if itest.s $device_name -eq usb; then "
+						"echo ===> Executing ${fstype}load ${device_name} 1:${partition} ${loadaddr} ${directory}${bootscript};"
+						"if ${fstype}load ${device_name} 1:${partition} ${loadaddr} ${directory}${bootscript}; then "
+							"source ${loadaddr};"
+						"fi;"
+					"fi;"
+				"done;"
+			"done;"
+		"done;"
+	"done;"
+	"tftp ${loadaddr} ${bootscript};"
+	"source ${loadaddr};"
+	);
+#else
             setenv("bootcmd","echo Scanning for boot devices;\
 usb start;\
 ide reset;\
@@ -713,7 +753,7 @@ done;\
 done;\
 echo No boot device found. Falling back to TFTP boot;\
 run tftpbootcmd;");
-
+#endif
 #else
             setenv("bootcmd","echo Hush not available, failling back to TFTP boot;\
 run tftpbootcmd;");
@@ -1114,7 +1154,9 @@ int misc_init_r (void)
 	misc_init_r_env();
 
 	mv_cpu_init();
-
+#ifdef CUBOX
+	optimize_powerrails();
+#endif
 #if defined(MV_INCLUDE_MONT_EXT)
 	if(enaMonExt()){
 		printf("Marvell monitor extension:\n");
@@ -1508,7 +1550,11 @@ int mv_set_power_scheme(void)
 #endif
 	/* VPU power */
         env = getenv("enaVpuPower");
+#ifdef CUBOX
+        if(( (strcmp(env,"yes") == 0) || (strcmp(env,"Yes") == 0) ) )
+#else
         if(!env || ( (strcmp(env,"yes") == 0) || (strcmp(env,"Yes") == 0) ) )
+#endif
 	{
                 setenv("enaVpuPower","yes");
 		printf("Setting VPU power ON.\n");

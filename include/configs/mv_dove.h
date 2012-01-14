@@ -97,20 +97,20 @@ extern unsigned int mvTclkGet(void);
 #define CONFIG_BOOTP_MASK	(CONFIG_BOOTP_DEFAULT | \
 				 CONFIG_BOOTP_BOOTFILESIZE)
 
-#define CONFIG_CMD_DHCP
-#define CONFIG_CMD_ELF
+#undef CONFIG_CMD_DHCP
+#undef CONFIG_CMD_ELF
 #define CONFIG_CMD_I2C
 #define CONFIG_CMD_EEPROM
 #define CONFIG_CMD_NET
-#define CONFIG_CMD_PING
+#undef CONFIG_CMD_PING
 #define CONFIG_CMD_DATE
-#define CONFIG_CMD_LOADS
-#define CONFIG_CMD_BSP
-#define CONFIG_CMD_MEMORY
-#define CONFIG_CMD_BOOTD
+#undef CONFIG_CMD_LOADS
+#undef CONFIG_CMD_BSP
+#undef CONFIG_CMD_MEMORY
+#undef CONFIG_CMD_BOOTD
 #define CONFIG_CMD_CONSOLE
 #define CONFIG_CMD_RUN
-#define CONFIG_CMD_MISC
+#undef CONFIG_CMD_MISC
 
 //alior#define CONFIG_CMD_RCVR
 //alior#define CONFIG_CMD_SAR
@@ -125,11 +125,11 @@ extern unsigned int mvTclkGet(void);
 
 /* FS supported */
 #define CONFIG_CMD_EXT2
-#define CONFIG_CMD_JFFS2
+#undef CONFIG_CMD_JFFS2
 #define CONFIG_CMD_FAT
 #define CONFIG_SUPPORT_VFAT
 
-#define CONFIG_SYS_USE_UBI
+#undef CONFIG_SYS_USE_UBI
 #ifdef CONFIG_SYS_USE_UBI
 	#define CONFIG_CMD_UBI
 	#define CONFIG_CMD_UBIFS
@@ -233,14 +233,14 @@ extern unsigned int mvTclkGet(void);
 #define CONFIG_BAUDRATE         115200   /* console baudrate = 115200    */
 #define CONFIG_SYS_BAUDRATE_TABLE	{ 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600 }
  
-#if defined(RD_88F6781_AVNG) || defined(DB_88F6781Y0) || defined(RD_88F6781Y0_AVNG) || defined(DB_88F6781X0) || defined(RD_88F6781X0_PLUG) || defined(RD_88F6781X0_AVNG) || defined(DB_88AP510BP_B) || defined(DB_88AP510_PCAC)|| defined(RD_88AP510A0_AVNG)
+#if defined(RD_88F6781_AVNG) || defined(DB_88F6781Y0) || defined(RD_88F6781Y0_AVNG) || defined(DB_88F6781X0) || defined(RD_88F6781X0_PLUG) || defined(RD_88F6781X0_AVNG) || defined(DB_88AP510BP_B) || defined(DB_88AP510_PCAC)|| defined(RD_88AP510A0_AVNG) || defined(CUBOX)
 #define CONFIG_SYS_DUART_CHAN		0		/* channel to use for console */
 #else
 #define CONFIG_SYS_DUART_CHAN		1		/* channel to use for console */
 #endif
 
 #define CONFIG_SYS_INIT_CHAN1
-#if !defined(RD_88F6781_AVNG) && !defined(RD_88F6781Y0_AVNG) && !defined(RD_88F6781X0_AVNG)&& !defined(RD_88AP510A0_AVNG)
+#if !defined(RD_88F6781_AVNG) && !defined(RD_88F6781Y0_AVNG) && !defined(RD_88F6781X0_AVNG)&& !defined(RD_88AP510A0_AVNG)&& !defined(CUBOX)  
 #define CONFIG_SYS_INIT_CHAN2
 #endif
 
@@ -258,7 +258,7 @@ extern unsigned int mvTclkGet(void);
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 
 #define	CONFIG_SYS_LONGHELP			/* undef to save memory		*/
-#define	CONFIG_SYS_PROMPT	"Marvell>> "	/* Monitor Command Prompt	*/
+#define	CONFIG_SYS_PROMPT	"CuBox>> "	/* Monitor Command Prompt	*/
 #define	CONFIG_SYS_CBSIZE	1024		/* Console I/O Buffer Size	*/
 #define	CONFIG_SYS_PBSIZE (CONFIG_SYS_CBSIZE+sizeof(CONFIG_SYS_PROMPT)+16) /* Print Buffer Size */
 
@@ -267,8 +267,8 @@ extern unsigned int mvTclkGet(void);
 /************/
 /* to change the default ethernet port, use this define (options: 0, 1, 2) */
 #define CONFIG_NET_MULTI
-#define CONFIG_IPADDR		10.4.50.165
-#define CONFIG_SERVERIP		10.4.50.5
+#define CONFIG_IPADDR		192.168.15.223
+#define CONFIG_SERVERIP		192.168.15.100
 #define CONFIG_NETMASK		255.255.255.0
 #define ETHADDR				"00:00:00:00:51:81"
 #define ETH1ADDR			"00:00:00:00:51:82"
@@ -394,11 +394,11 @@ if not?? #define CONFIG_LBA48
  #define CONFIG_PCI_PNP          	/* do pci plug-and-play         */
 
 /* Pnp PCI Network cards */
- #define CONFIG_EEPRO100		/* Support for Intel 82557/82559/82559ER chips */
- #define CONFIG_E1000
- #define CONFIG_SK98			/* yukon */
+ #undef CONFIG_EEPRO100		/* Support for Intel 82557/82559/82559ER chips */
+ #undef CONFIG_E1000
+ #undef CONFIG_SK98			/* yukon */
  #define YUK_ETHADDR         		"00:00:00:EE:51:81"
- #define CONFIG_DRIVER_RTL8029 
+ #undef CONFIG_DRIVER_RTL8029 
 
 /* DB_PRPMC support only Yukon */
 #if defined (DB_PRPMC) || defined (DB_MNG)
@@ -465,6 +465,7 @@ extern int mv_board_num_flash_banks;
 	#define CONFIG_SPI_FLASH_PROTECTION
 	#define CONFIG_SPI_FLASH_STMICRO
 	#define CONFIG_SPI_FLASH_MACRONIX
+	#define CONFIG_SPI_FLASH_WINBOND
 	#define CONFIG_ENV_SPI_MAX_HZ		20000000	/*Max 50Mhz- will sattle on SPI bus max 41.5Mhz */
 	#define CONFIG_ENV_SPI_CS			0
 	#define CONFIG_ENV_SPI_BUS			0

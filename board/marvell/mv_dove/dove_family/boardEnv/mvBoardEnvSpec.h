@@ -134,10 +134,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DB_88AP510_PCAC_ID					(BOARD_ID_BASE+0x7)
 /* reusing the board ID pased to Linux - same as DB-Z0 board */
 #define DB_88AP510_PCAC_MLL_ID				1799
-#define BOARD_ID_88F6781_MAX				(BOARD_ID_BASE+0x9)
+#define BOARD_ID_88F6781_MAX				(BOARD_ID_BASE+0xa)
 /* reusing the board ID pased to Linux - same as RD_88F6781_ID board */
 #define RD_88AP510A0_AVNG_ID				(BOARD_ID_BASE+0x8)
 #define RD_88AP510A0_AVNG_MLL_ID			3013
+/* reusing the board ID pased to Linux - same as RD_88F6781_ID board */
+#define RD_88AP510A0_CUBOX_ID				(BOARD_ID_BASE+0x09)
+#define RD_88AP510A0_CUBOX_MLL_ID			3905
 
 #define MV_MAX_BOARD_ID 					BOARD_ID_88F6781_MAX
 
@@ -274,5 +277,19 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define DB_88AP510_PCAC_OE_HIGH				0xBFFFFFFF
 #define DB_88AP510_PCAC_OE_VAL_LOW			((BIT2))
 #define DB_88AP510_PCAC_OE_VAL_HIGH			0x0
+
+/* Cubox */
+
+#define CUBOX_MPP0_7            0x00000000
+#define CUBOX_MPP8_15           0x00030000
+#define CUBOX_MPP16_23          0x00002400
+#define CUBOX_MPP24_31          0x00000000
+#define CUBOX_MPP32_39          0x00000000
+#define CUBOX_MPP40_47          0x00000000
+#define CUBOX_MPP48_55          0x00000000
+#define CUBOX_OE_LOW            (~BIT1)
+#define CUBOX_OE_HIGH           0xffffffff
+#define CUBOX_OE_VAL_LOW        0x00010186
+#define CUBOX_OE_VAL_HIGH       0x018000C0
 
 #endif /* __INCmvBoardEnvSpech */

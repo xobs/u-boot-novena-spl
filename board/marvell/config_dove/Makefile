@@ -65,8 +65,7 @@ SOC_OBJS = 	$(SOC_ENV_DIR)/mvCtrlEnvAddrDec.o $(SOC_ENV_DIR)/mvCtrlEnvLib.o	\
 			$(SOC_SYS_DIR)/mvAhbToMbus.o $(SOC_SYS_DIR)/mvCpuIf.o			\
 			$(SOC_CPU_DIR)/mvCpu.o $(SOC_DEVICE_DIR)/mvDevice.o				\
 			$(SOC_DIR)/mv_main.o $(SOC_DIR)/mv_cmd.o $(SOC_DIR)/mv_dram.o	\
-			$(SOC_DIR)/mv_service.o $(SOC_DIR)/mv_manufacture_test.o		\
-			$(SOC_DIR)/mv_dvs.o
+			$(SOC_DIR)/mv_service.o $(SOC_DIR)/mv_dvs.o
 
 ##ifneq ($(MV_TINY_IMAGE), y) 
 ##SOC_OBJS     += $(HAL_PCIIF_DIR)/pci_util/mvPciUtils.o

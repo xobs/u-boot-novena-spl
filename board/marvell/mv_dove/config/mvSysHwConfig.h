@@ -46,11 +46,11 @@ disclaimer.
 #define MV_INCLUDE_XOR
 //#define MV_INCLUDE_CAMERA
 //#define MV_INCLUDE_GPU
-#define MV_INCLUDE_AUDIO
-#define MV_INCLUDE_AC97
+#undef MV_INCLUDE_AUDIO
+#undef MV_INCLUDE_AC97
 #define MV_INCLUDE_SDIO
 #define MV_INCLUDE_RTC
-#define MV_INCLUDE_PDMA
+#undef MV_INCLUDE_PDMA
 #define MV_INCLUDE_INTEG_SATA
 #define MV_INCLUDE_CLK_PWR_CNTRL
 #define MV_INCLUDE_PMU
@@ -62,7 +62,7 @@ disclaimer.
 /* DRAM ddim detection support */
 #undef MV_INC_BOARD_DDIM
 /* On-Board NAND Flash support */
-#define MV_INC_BOARD_NAND_FLASH
+#undef MV_INC_BOARD_NAND_FLASH
 /* On-Board SPI Flash support */
 #define MV_INC_BOARD_SPI_FLASH
 /* On-Board RTC */
@@ -72,7 +72,7 @@ disclaimer.
 /************************************************/
 /* U-Boot Specific				*/
 /************************************************/
-#define MV_INCLUDE_MONT_EXT
+#undef MV_INCLUDE_MONT_EXT
 
 #if defined(MV_INCLUDE_MONT_EXT)
 #define MV_INCLUDE_MONT_MMU
