@@ -2,7 +2,6 @@
  * Atmel SPI DataFlash support
  *
  * Copyright (C) 2008 Atmel Corporation
- * Licensed under the GPL-2 or later.
  */
 
 #include <common.h>
@@ -170,6 +169,20 @@ static void at45_build_address(struct atmel_spi_flash *asf, u8 *cmd, u32 offset)
 	cmd[2] = byte_addr;
 }
 
+static int dataflash_read_fast_p2(struct spi_flash *flash,
+		u32 offset, size_t len, void *buf)
+{
+	u8 cmd[5];
+
+	cmd[0] = CMD_READ_ARRAY_FAST;
+	cmd[1] = offset >> 16;
+	cmd[2] = offset >> 8;
+	cmd[3] = offset;
+	cmd[4] = 0x00;
+
+	return spi_flash_read_common(flash, cmd, sizeof(cmd), buf, len);
+}
+
 static int dataflash_read_fast_at45(struct spi_flash *flash,
 		u32 offset, size_t len, void *buf)
 {
@@ -328,7 +341,7 @@ out:
 /*
  * TODO: the two erase funcs (_p2/_at45) should get unified ...
  */
-static int dataflash_erase_p2(struct spi_flash *flash, u32 offset, size_t len)
+int dataflash_erase_p2(struct spi_flash *flash, u32 offset, size_t len)
 {
 	struct atmel_spi_flash *asf = to_atmel_spi_flash(flash);
 	unsigned long page_size;
@@ -387,7 +400,7 @@ out:
 	return ret;
 }
 
-static int dataflash_erase_at45(struct spi_flash *flash, u32 offset, size_t len)
+int dataflash_erase_at45(struct spi_flash *flash, u32 offset, size_t len)
 {
 	struct atmel_spi_flash *asf = to_atmel_spi_flash(flash);
 	unsigned long page_addr;
@@ -453,7 +466,7 @@ out:
 struct spi_flash *spi_flash_probe_atmel(struct spi_slave *spi, u8 *idcode)
 {
 	const struct atmel_spi_flash_params *params;
-	unsigned page_size;
+	unsigned long page_size;
 	unsigned int family;
 	struct atmel_spi_flash *asf;
 	unsigned int i;
@@ -505,7 +518,7 @@ struct spi_flash *spi_flash_probe_atmel(struct spi_slave *spi, u8 *idcode)
 			asf->flash.erase = dataflash_erase_at45;
 			page_size += 1 << (params->l2_page_size - 5);
 		} else {
-			asf->flash.read = spi_flash_cmd_read_fast;
+			asf->flash.read = dataflash_read_fast_p2;
 			asf->flash.write = dataflash_write_p2;
 			asf->flash.erase = dataflash_erase_p2;
 		}
@@ -514,7 +527,7 @@ struct spi_flash *spi_flash_probe_atmel(struct spi_slave *spi, u8 *idcode)
 
 	case DF_FAMILY_AT26F:
 	case DF_FAMILY_AT26DF:
-		asf->flash.read = spi_flash_cmd_read_fast;
+		asf->flash.read = dataflash_read_fast_p2;
 		break;
 
 	default:
@@ -522,10 +535,12 @@ struct spi_flash *spi_flash_probe_atmel(struct spi_slave *spi, u8 *idcode)
 		goto err;
 	}
 
-	asf->flash.sector_size = page_size;
 	asf->flash.size = page_size * params->pages_per_block
 				* params->blocks_per_sector
 				* params->nr_sectors;
+
+	debug("SF: Detected %s with page size %lu, total %u bytes\n",
+			params->name, page_size, asf->flash.size);
 
 	return &asf->flash;
 
