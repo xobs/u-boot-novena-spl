@@ -35,7 +35,10 @@ DECLARE_GLOBAL_DATA_PTR;
     defined (CONFIG_SERIAL_TAG) || \
     defined (CONFIG_REVISION_TAG) || \
     defined (CONFIG_VFD) || \
-    defined (CONFIG_LCD)
+    defined (CONFIG_LCD) ||	\
+    defined (CONFIG_MARVELL_TAG)
+
+
 static void setup_start_tag (bd_t *bd);
 
 # ifdef CONFIG_SETUP_MEMORY_TAGS
@@ -53,6 +56,11 @@ static void setup_end_tag (bd_t *bd);
 static void setup_videolfb_tag (gd_t *gd);
 # endif
 
+#if defined (CONFIG_MARVELL_TAG)
+static void setup_marvell_tag(void);
+static void setup_marvell_dvs_tag(void);
+#endif
+
 static struct tag *params;
 #endif /* CONFIG_SETUP_MEMORY_TAGS || CONFIG_CMDLINE_TAG || CONFIG_INITRD_TAG */
 
@@ -65,6 +73,9 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 
 #ifdef CONFIG_CMDLINE_TAG
 	char *commandline = getenv ("bootargs");
+#endif
+#ifdef CONFIG_MARVELL_TAG
+	char *env;
 #endif
 
 	if ((flag != 0) && (flag != BOOTM_STATE_OS_GO))
@@ -89,7 +100,8 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
     defined (CONFIG_SERIAL_TAG) || \
     defined (CONFIG_REVISION_TAG) || \
     defined (CONFIG_LCD) || \
-    defined (CONFIG_VFD)
+    defined (CONFIG_VFD) || \
+    defined (CONFIG_MARVELL_TAG)
 	setup_start_tag (bd);
 #ifdef CONFIG_SERIAL_TAG
 	setup_serial_tag (&params);
@@ -109,6 +121,13 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
 #endif
 #if defined (CONFIG_VFD) || defined (CONFIG_LCD)
 	setup_videolfb_tag ((gd_t *) gd);
+#endif
+#if defined (CONFIG_MARVELL_TAG)
+	env = getenv("passDramInitTag");
+	if(((strcmp(env,"yes") == 0) || (strcmp(env,"Yes") == 0))) {
+		setup_marvell_tag();
+	}
+	setup_marvell_dvs_tag();
 #endif
 	setup_end_tag (bd);
 #endif
@@ -138,7 +157,8 @@ int do_bootm_linux(int flag, int argc, char *argv[], bootm_headers_t *images)
     defined (CONFIG_SERIAL_TAG) || \
     defined (CONFIG_REVISION_TAG) || \
     defined (CONFIG_LCD) || \
-    defined (CONFIG_VFD)
+    defined (CONFIG_VFD) || \
+    defined (CONFIG_MARVELL_TAG)
 static void setup_start_tag (bd_t *bd)
 {
 	params = (struct tag *) bd->bi_boot_params;
@@ -237,6 +257,35 @@ static void setup_videolfb_tag (gd_t *gd)
 	params = tag_next (params);
 }
 #endif /* CONFIG_VFD || CONFIG_LCD */
+
+#if defined(CONFIG_MARVELL_TAG)
+extern MV_DRAM_INIT mv_dram_init;
+
+
+static void setup_marvell_tag (void)
+{
+	params->hdr.tag = ATAG_MARVELL;
+	params->hdr.size = tag_size (tag_mv_uboot);
+
+	params->u.mv_uboot.uboot_version = VER_NUM;
+	memcpy(&(params->u.mv_uboot.mv_dram_init), &mv_dram_init, sizeof(MV_DRAM_INIT));
+
+	params = tag_next (params);
+}
+
+extern u32 dvs_values_param;
+static void setup_marvell_dvs_tag (void)
+{
+	params->hdr.tag = ATAG_MARVELL_DVS;
+	params->hdr.size = tag_size (tag_mv_dvs);
+
+	params->u.mv_dvs.uboot_version = VER_NUM;
+	params->u.mv_dvs.dvs_values = dvs_values_param;
+
+	params = tag_next (params);
+}
+
+#endif
 
 #ifdef CONFIG_SERIAL_TAG
 void setup_serial_tag (struct tag **tmp)

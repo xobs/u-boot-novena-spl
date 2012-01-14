@@ -30,3 +30,10 @@ EXPORT_FUNC(spi_free_slave)
 EXPORT_FUNC(spi_claim_bus)
 EXPORT_FUNC(spi_release_bus)
 EXPORT_FUNC(spi_xfer)
+#ifdef CONFIG_MARVELL
+EXPORT_FUNC(realloc)
+EXPORT_FUNC(calloc)
+EXPORT_FUNC(memalign)
+EXPORT_FUNC(mvGetRtcSec)
+#endif
+

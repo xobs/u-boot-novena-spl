@@ -51,7 +51,8 @@ int ext2fs_set_blk_dev (block_dev_desc_t * rbdd, int part)
 
 
 int ext2fs_devread (int sector, int byte_offset, int byte_len, char *buf) {
-	char sec_buf[SECTOR_SIZE];
+	short sec_buffer[SECTOR_SIZE/sizeof(short)];
+	char *sec_buf = sec_buffer;
 	unsigned block_len;
 
 /*

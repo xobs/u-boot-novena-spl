@@ -1221,6 +1221,14 @@ static void fixup_silent_linux ()
 /*******************************************************************/
 /* OS booting routines */
 /*******************************************************************/
+#ifdef CONFIG_MARVELL
+char extraBootArgs[200];
+
+/* NetBSD Stage-2 Loader Parameters:
+*   r6: boot args string
+*/
+#define DECLARE_NETBSD_CMDLINE register volatile char *cmdline asm ("r6");
+#endif /*CONFIG_MARVELL*/
 
 #ifdef CONFIG_BOOTM_NETBSD
 static int do_bootm_netbsd (int flag, int argc, char *argv[],
@@ -1230,8 +1238,13 @@ static int do_bootm_netbsd (int flag, int argc, char *argv[],
 	image_header_t *os_hdr, *hdr;
 	ulong kernel_data, kernel_len;
 	char *consdev;
-	char *cmdline;
 
+#ifdef CONFIG_MARVELL
+	DECLARE_NETBSD_CMDLINE;
+	bd_t *bd = gd->bd;
+#else
+	char *cmdline;
+#endif /*CONFIG_MARVELL*/
 	if ((flag != 0) && (flag != BOOTM_STATE_OS_GO))
 		return 1;
 
@@ -1240,7 +1253,7 @@ static int do_bootm_netbsd (int flag, int argc, char *argv[],
 		fit_unsupported_reset ("NetBSD");
 		return 1;
 	}
-#endif
+#endif /*defined(CONFIG_FIT)*/
 	hdr = images->legacy_hdr_os;
 
 	/*
@@ -1276,8 +1289,28 @@ static int do_bootm_netbsd (int flag, int argc, char *argv[],
 		ulong len;
 		int   i;
 
+#ifdef CONFIG_MARVELL
+		unsigned int mvBoardIdGet(void);
+		char buf[30];
+		sprintf(extraBootArgs ,"boardId=%x",mvBoardIdGet()); 
+
+		for (i = 0; i < 4; i++) 
+		{
+			sprintf(buf ," dram%d_start=%x",i, bd->bi_dram[i].start);
+			strcat(extraBootArgs, buf); 
+			sprintf(buf ," dram%d_size=%x",i, bd->bi_dram[i].size);
+			strcat(extraBootArgs, buf); 
+		}
+
+#endif /*CONFIG_MARVELL*/
+
 		for (i = 2, len = 0; i < argc; i += 1)
 			len += strlen (argv[i]) + 1;
+
+#ifdef CONFIG_MARVELL
+		/* Adding BoardId */
+		len += strlen(extraBootArgs) + 1;
+#endif /*CONFIG_MARVELL*/
 		cmdline = malloc (len);
 
 		for (i = 2, len = 0; i < argc; i += 1) {
@@ -1286,6 +1319,14 @@ static int do_bootm_netbsd (int flag, int argc, char *argv[],
 			strcpy (&cmdline[len], argv[i]);
 			len += strlen (argv[i]);
 		}
+
+#ifdef CONFIG_MARVELL
+		/* Adding BoardId */
+		if (i > 2) cmdline[len++] = ' ';
+		strcpy (&cmdline[len], extraBootArgs);
+		len += strlen (extraBootArgs);
+#endif /*CONFIG_MARVELL*/
+
 	} else if ((cmdline = getenv ("bootargs")) == NULL) {
 		cmdline = "";
 	}
@@ -1324,7 +1365,7 @@ static int do_bootm_lynxkdi (int flag, int argc, char *argv[],
 		fit_unsupported_reset ("Lynx");
 		return 1;
 	}
-#endif
+#endif /*defined(CONFIG_FIT)*/
 
 	lynxkdi_boot ((image_header_t *)hdr);
 
@@ -1346,7 +1387,7 @@ static int do_bootm_rtems (int flag, int argc, char *argv[],
 		fit_unsupported_reset ("RTEMS");
 		return 1;
 	}
-#endif
+#endif /*defined(CONFIG_FIT)*/
 
 	entry_point = (void (*)(bd_t *))images->ep;
 
@@ -1379,7 +1420,7 @@ static int do_bootm_vxworks (int flag, int argc, char *argv[],
 		fit_unsupported_reset ("VxWorks");
 		return 1;
 	}
-#endif
+#endif /*defined(CONFIG_FIT)*/
 
 	sprintf(str, "%lx", images->ep); /* write entry-point into string */
 	setenv("loadaddr", str);
@@ -1402,7 +1443,7 @@ static int do_bootm_qnxelf(int flag, int argc, char *argv[],
 		fit_unsupported_reset ("QNX");
 		return 1;
 	}
-#endif
+#endif /*defined(CONFIG_FIT)*/
 
 	sprintf(str, "%lx", images->ep); /* write entry-point into string */
 	local_args[0] = argv[0];
@@ -1411,7 +1452,7 @@ static int do_bootm_qnxelf(int flag, int argc, char *argv[],
 
 	return 1;
 }
-#endif
+#endif /*defined(CONFIG_CMD_ELF)*/
 
 #ifdef CONFIG_INTEGRITY
 static int do_bootm_integrity (int flag, int argc, char *argv[],
@@ -1427,7 +1468,7 @@ static int do_bootm_integrity (int flag, int argc, char *argv[],
 		fit_unsupported_reset ("INTEGRITY");
 		return 1;
 	}
-#endif
+#endif /*defined(CONFIG_FIT)*/
 
 	entry_point = (void (*)(void))images->ep;
 
@@ -1444,4 +1485,4 @@ static int do_bootm_integrity (int flag, int argc, char *argv[],
 
 	return 1;
 }
-#endif
+#endif /*CONFIG_INTEGRITY*/

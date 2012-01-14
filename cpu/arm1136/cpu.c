@@ -6,7 +6,7 @@
  * Marius Groeger <mgroeger@sysgo.de>
  *
  * (C) Copyright 2002
- * Gary Jennejohn, DENX Software Engineering, <garyj@denx.de>
+ * Gary Jennejohn, DENX Software Engineering, <gj@denx.de>
  *
  * See file CREDITS for list of people who contributed to this
  * project.
@@ -33,9 +33,67 @@
 
 #include <common.h>
 #include <command.h>
-#include <asm/system.h>
 
-static void cache_flush(void);
+#ifdef CONFIG_USE_IRQ
+DECLARE_GLOBAL_DATA_PTR;
+#endif
+
+/* read co-processor 15, register #1 (control register) */
+static unsigned long read_p15_c1 (void)
+{
+	unsigned long value;
+
+	__asm__ __volatile__(
+				"mrc	p15, 0, %0, c1, c0, 0   @ read control reg\n"
+				: "=r" (value)
+				:
+				: "memory");
+	return value;
+}
+
+/* write to co-processor 15, register #1 (control register) */
+static void write_p15_c1 (unsigned long value)
+{
+	__asm__ __volatile__(
+						"mcr	p15, 0, %0, c1, c0, 0   @ write it back\n"
+						:
+						: "r" (value)
+						: "memory");
+
+	read_p15_c1 ();
+}
+
+static void cp_delay (void)
+{
+	volatile int i;
+
+	/* Many OMAP regs need at least 2 nops  */
+	for (i = 0; i < 100; i++);
+}
+
+/* See also ARM Ref. Man. */
+#define C1_MMU		(1<<0)		/* mmu off/on */
+#define C1_ALIGN	(1<<1)		/* alignment faults off/on */
+#define C1_DC		(1<<2)		/* dcache off/on */
+#define C1_WB		(1<<3)		/* merging write buffer on/off */
+#define C1_BIG_ENDIAN	(1<<7)	/* big endian off/on */
+#define C1_SYS_PROT	(1<<8)		/* system protection */
+#define C1_ROM_PROT	(1<<9)		/* ROM protection */
+#define C1_IC		(1<<12)		/* icache off/on */
+#define C1_HIGH_VECTORS	(1<<13)	/* location of vectors: low/high addresses */
+#define RESERVED_1	(0xf << 3)	/* must be 111b for R/W */
+
+int cpu_init (void)
+{
+	/*
+	 * setup up stacks if necessary
+	 */
+#ifdef CONFIG_USE_IRQ
+	IRQ_STACK_START = _armboot_start - CONFIG_SYS_MALLOC_LEN - CONFIG_SYS_GBL_DATA_SIZE - 4;
+	FIQ_STACK_START = IRQ_STACK_START - CONFIG_STACKSIZE_IRQ;
+#endif
+	return 0;
+}
 
 int cleanup_before_linux (void)
 {
@@ -45,6 +103,8 @@ int cleanup_before_linux (void)
 	 *
 	 * we turn off caches etc ...
 	 */
+
+	unsigned long i;
 
 	disable_interrupts ();
 
@@ -58,19 +118,94 @@ int cleanup_before_linux (void)
 	}
 #endif
 
+#ifdef CONFIG_MARVELL
+	/* turn off L2 Cache */
+	asm ("mrc p15, 0, %0, c1, c0, 0":"=r" (i));
+	i &= ~0x04000000; /* clear bit 26 */
+	asm ("mcr p15, 0, %0, c1, c0, 0": :"r" (i));
+	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop");
+	/* Clean L2 Cache */
+	asm ("mcr p15, 1, %0, c7, c11, 0": :"r" (i));
+	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop");
+	/* Drain write buffer */
+	asm ("mcr p15, 0, %0, c7, c10, 4": :"r" (i));
+	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop");
+#endif
+
 	/* turn off I/D-cache */
-	icache_disable();
-	dcache_disable();
+	asm ("mrc p15, 0, %0, c1, c0, 0":"=r" (i));
+	i &= ~(C1_DC | C1_IC);
+	asm ("mcr p15, 0, %0, c1, c0, 0": :"r" (i));
+
 	/* flush I/D-cache */
-	cache_flush();
-
-	return 0;
-}
-
-static void cache_flush(void)
-{
-	unsigned long i = 0;
-
+	i = 0;
 	asm ("mcr p15, 0, %0, c7, c7, 0": :"r" (i));  /* invalidate both caches and flush btb */
 	asm ("mcr p15, 0, %0, c7, c10, 4": :"r" (i)); /* mem barrier to sync things */
+	return(0);
+}
+
+int do_reset (cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+{
+	disable_interrupts ();
+	reset_cpu(0);
+	/*NOTREACHED*/
+	return(0);
+}
+
+/* cache_bit must be either C1_IC or C1_DC */
+static void cache_enable(uint32_t cache_bit)
+{
+	uint32_t reg;
+
+	reg = read_p15_c1();	/* get control reg. */
+	cp_delay();
+	write_p15_c1(reg | cache_bit);
+}
+
+/* cache_bit must be either C1_IC or C1_DC */
+static void cache_disable(uint32_t cache_bit)
+{
+	uint32_t reg;
+
+	reg = read_p15_c1();
+	cp_delay();
+	write_p15_c1(reg & ~cache_bit);
+}
+
+void icache_enable (void)
+{
+	ulong reg;
+
+	reg = read_p15_c1 ();	/* get control reg. */
+	cp_delay ();
+	write_p15_c1 (reg | C1_IC);
+}
+
+void icache_disable (void)
+{
+	ulong reg;
+
+	reg = read_p15_c1 ();
+	cp_delay ();
+	write_p15_c1 (reg & ~C1_IC);
+}
+
+int icache_status (void)
+{
+	return(read_p15_c1 () & C1_IC) != 0;
+}
+
+void dcache_enable(void)
+{
+	cache_enable(C1_DC);
+}
+
+void dcache_disable(void)
+{
+	cache_disable(C1_DC);
+}
+
+int dcache_status(void)
+{
+	return (read_p15_c1() & C1_DC) != 0;
 }

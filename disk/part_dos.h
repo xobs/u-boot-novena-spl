@@ -34,7 +34,11 @@
 #endif
 #define DOS_PART_TBL_OFFSET	0x1be
 #define DOS_PART_MAGIC_OFFSET	0x1fe
-#define DOS_PBR_FSTYPE_OFFSET	0x36
+#ifdef CONFIG_MARVELL
+	#define DOS_PBR_FSTYPE_OFFSET	0x52
+#else
+	#define DOS_PBR_FSTYPE_OFFSET	0x36
+#endif
 #define DOS_PBR_MEDIA_TYPE_OFFSET	0x15
 #define DOS_MBR	0
 #define DOS_PBR	1

@@ -44,9 +44,9 @@ static inline void __change_bit(int nr, volatile void *addr)
 	((unsigned char *) addr)[nr >> 3] ^= (1U << (nr & 7));
 }
 
-extern int test_and_set_bit(int nr, volatile void * addr);
+//extern int test_and_set_bit(int nr, volatile void * addr);
 
-static inline int __test_and_set_bit(int nr, volatile void *addr)
+static inline int test_and_set_bit(int nr, volatile void *addr)
 {
 	unsigned int mask = 1 << (nr & 7);
 	unsigned int oldval;
@@ -91,6 +91,19 @@ static inline int test_bit(int nr, const void * addr)
     return ((unsigned char *) addr)[nr >> 3] & (1U << (nr & 7));
 }
 
+/* Return the bit position of the most significant 1 bit in a word */
+extern __inline__ int __ilog2(unsigned int x)
+{
+	int lz;
+
+	asm ("clz %0,%1" : "=r" (lz) : "r" (x));
+	return 31 - lz;
+}
+/* alior: adding fls command */
+static __inline__ int fls(unsigned int x)
+{
+	return __ilog2(x) + 1;
+}
 /*
  * ffz = Find First Zero in word. Undefined if no zero exists,
  * so code should check against ~0UL first..
@@ -116,6 +129,8 @@ static inline unsigned long ffz(unsigned long word)
  */
 
 #define ffs(x) generic_ffs(x)
+
+#define ffs64(x) generic_ffs64(x)
 
 /*
  * hweightN: returns the hamming weight (i.e. the number

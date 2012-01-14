@@ -51,7 +51,7 @@ extern uchar default_environment[];
 char * env_name_spec = "SPI Flash";
 env_t *env_ptr;
 
-static struct spi_flash *env_flash;
+extern struct spi_flash *flash;
 
 uchar env_get_char_spec(int index)
 {
@@ -65,7 +65,7 @@ int saveenv(void)
 	u32 sector = 1;
 	int ret;
 
-	if (!env_flash) {
+	if (!flash) {
 		puts("Environment SPI flash not initialized\n");
 		return 1;
 	}
@@ -79,7 +79,7 @@ int saveenv(void)
 			ret = 1;
 			goto done;
 		}
-		ret = spi_flash_read(env_flash, saved_offset, saved_size, saved_buffer);
+		ret = spi_flash_read(flash, saved_offset, saved_size, saved_buffer);
 		if (ret)
 			goto done;
 	}
@@ -89,26 +89,33 @@ int saveenv(void)
 		if (CONFIG_ENV_SIZE % CONFIG_ENV_SECT_SIZE)
 			sector++;
 	}
-
-	puts("Erasing SPI flash...");
-	ret = spi_flash_erase(env_flash, CONFIG_ENV_OFFSET, sector * CONFIG_ENV_SECT_SIZE);
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+	printf("Unprotecting flash:");
+	spi_flash_protect(flash, 0);
+	printf("\t\t[Done]\n");
+#endif
+	printf("Erasing 0x%x - 0x%x:",CONFIG_ENV_OFFSET, CONFIG_ENV_OFFSET + sector * CONFIG_ENV_SECT_SIZE);
+	ret = spi_flash_erase(flash, CONFIG_ENV_OFFSET, sector * CONFIG_ENV_SECT_SIZE);
 	if (ret)
 		goto done;
-
-	puts("Writing to SPI flash...");
-	ret = spi_flash_write(env_flash, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE, env_ptr);
+	printf("\t[Done]\n");
+	puts("Writing to SPI flash:");
+	ret = spi_flash_write(flash, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE, env_ptr);
 	if (ret)
 		goto done;
 
 	if (CONFIG_ENV_SECT_SIZE > CONFIG_ENV_SIZE) {
-		ret = spi_flash_write(env_flash, saved_offset, saved_size, saved_buffer);
+		ret = spi_flash_write(flash, saved_offset, saved_size, saved_buffer);
 		if (ret)
 			goto done;
 	}
-
+	printf("\t\t[Done]\n");
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+	printf("Protecting flash:");
+	spi_flash_protect(flash, 1);
+	printf("\t\t[Done]\n");
+#endif
 	ret = 0;
-	puts("done\n");
-
  done:
 	if (saved_buffer)
 		free(saved_buffer);
@@ -119,12 +126,14 @@ void env_relocate_spec(void)
 {
 	int ret;
 
-	env_flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
+	if (!flash) {
+		flash = spi_flash_probe(CONFIG_ENV_SPI_BUS, CONFIG_ENV_SPI_CS,
 			CONFIG_ENV_SPI_MAX_HZ, CONFIG_ENV_SPI_MODE);
-	if (!env_flash)
-		goto err_probe;
+		if (!flash)
+			goto err_probe;
+	}
 
-	ret = spi_flash_read(env_flash, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE, env_ptr);
+	ret = spi_flash_read(flash, CONFIG_ENV_OFFSET, CONFIG_ENV_SIZE, env_ptr);
 	if (ret)
 		goto err_read;
 
@@ -136,8 +145,8 @@ void env_relocate_spec(void)
 	return;
 
 err_read:
-	spi_flash_free(env_flash);
-	env_flash = NULL;
+	spi_flash_free(flash);
+	flash = NULL;
 err_probe:
 err_crc:
 	puts("*** Warning - bad CRC, using default environment\n\n");

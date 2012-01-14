@@ -217,10 +217,10 @@ int do_i2c_md ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	 * once.
 	 */
 	nbytes = length;
+	unsigned char	linebuf[DISP_LINE_LEN];
+	unsigned char	*cp;
+	
 	do {
-		unsigned char	linebuf[DISP_LINE_LEN];
-		unsigned char	*cp;
-
 		linebytes = (nbytes > DISP_LINE_LEN) ? DISP_LINE_LEN : nbytes;
 
 		if (i2c_read(chip, addr, alen, linebuf, linebytes) != 0)
@@ -250,6 +250,11 @@ int do_i2c_md ( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 	i2c_dp_last_addr   = addr;
 	i2c_dp_last_alen   = alen;
 	i2c_dp_last_length = length;
+
+	if(linebuf[0]==0x59 && linebuf[1]==0xb4  || linebuf[0]==0x7e && linebuf[1]==0x78)//for manufacture test
+		return 0;
+	else
+		return -1;
 
 	return 0;
 }

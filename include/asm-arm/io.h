@@ -91,6 +91,8 @@ extern void __raw_readsl(unsigned int addr, void *data, int longlen);
 #define __raw_readw(a)			__arch_getw(a)
 #define __raw_readl(a)			__arch_getl(a)
 
+#ifndef CONFIG_MARVELL
+
 #define writeb(v,a)			__arch_putb(v,a)
 #define writew(v,a)			__arch_putw(v,a)
 #define writel(v,a)			__arch_putl(v,a)
@@ -98,6 +100,8 @@ extern void __raw_readsl(unsigned int addr, void *data, int longlen);
 #define readb(a)			__arch_getb(a)
 #define readw(a)			__arch_getw(a)
 #define readl(a)			__arch_getl(a)
+
+#endif /* CONFIG_MARVELL */
 
 /*
  * The compiler seems to be incapable of optimising constants

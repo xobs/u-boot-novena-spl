@@ -15,7 +15,7 @@
 # define CONFIG_SF_DEFAULT_MODE		SPI_MODE_3
 #endif
 
-static struct spi_flash *flash;
+extern struct spi_flash *flash;
 
 static int do_spi_flash_probe(int argc, char *argv[])
 {
@@ -137,6 +137,7 @@ static int do_spi_flash_erase(int argc, char *argv[])
 	if (*argv[2] == 0 || *endp != 0)
 		goto usage;
 
+
 	ret = spi_flash_erase(flash, offset, len);
 	if (ret) {
 		printf("SPI flash %s failed\n", argv[0]);
@@ -149,8 +150,36 @@ usage:
 	puts("Usage: sf erase offset len\n");
 	return 1;
 }
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+static int do_spi_flash_protect(int argc, char *argv[])
+{
+	int ret;
+	const char *cmd;
 
-static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
+	if (argc < 2)
+		goto usage;
+
+	cmd = argv[1];
+	
+	if (strcmp(cmd, "on") == 0)
+		ret = spi_flash_protect(flash, 1);
+	if (strcmp(cmd, "off") == 0)
+		ret = spi_flash_protect(flash, 0);
+
+	if (ret) {
+		printf("SPI flash %s failed\n", argv[0]);
+		return 1;
+	}
+
+	return 0;
+
+usage:
+	puts("Usage: sf protect on/off\n");
+	return 1;
+}
+#endif
+
+int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 {
 	const char *cmd;
 
@@ -173,6 +202,10 @@ static int do_spi_flash(cmd_tbl_t *cmdtp, int flag, int argc, char *argv[])
 		return do_spi_flash_read_write(argc - 1, argv + 1);
 	if (strcmp(cmd, "erase") == 0)
 		return do_spi_flash_erase(argc - 1, argv + 1);
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+	if (strcmp(cmd, "protect") == 0)
+		return do_spi_flash_protect(argc - 1, argv + 1);
+#endif
 
 usage:
 	cmd_usage(cmdtp);
@@ -188,5 +221,9 @@ U_BOOT_CMD(
 	"				  `offset' to memory at `addr'\n"
 	"sf write addr offset len	- write `len' bytes from memory\n"
 	"				  at `addr' to flash at `offset'\n"
-	"sf erase offset len		- erase `len' bytes from `offset'"
+	"sf erase offset len		- erase `len' bytes from `offset'\n"
+#ifdef CONFIG_SPI_FLASH_PROTECTION
+	"sf protect on			- protect spi flash\n"
+	"sf protect off			- unprotect spi flash\n"
+#endif
 );

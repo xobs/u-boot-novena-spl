@@ -97,7 +97,7 @@ mmc_bwrite(int dev_num, ulong start, lbaint_t blkcnt, const void*src)
 	else
 		cmd.cmdidx = MMC_CMD_WRITE_SINGLE_BLOCK;
 
-	if (mmc->high_capacity)
+	if (mmc->block_addr == 1)
 		cmd.cmdarg = start;
 	else
 		cmd.cmdarg = start * blklen;
@@ -135,7 +135,7 @@ int mmc_read_block(struct mmc *mmc, void *dst, uint blocknum)
 
 	cmd.cmdidx = MMC_CMD_READ_SINGLE_BLOCK;
 
-	if (mmc->high_capacity)
+	if (mmc->block_addr)
 		cmd.cmdarg = blocknum;
 	else
 		cmd.cmdarg = blocknum * mmc->read_bl_len;
@@ -392,9 +392,10 @@ int mmc_change_freq(struct mmc *mmc)
 	if (err)
 		return err;
 
-	if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215])
-		mmc->high_capacity = 1;
-
+	if (!(IS_SD(mmc)) && (ext_csd[EXT_CSD_REV] >= 2))
+		if (ext_csd[212] || ext_csd[213] || ext_csd[214] || ext_csd[215]) {
+			mmc->block_addr = 1;
+		}
 	cardtype = ext_csd[196] & 0xf;
 
 	err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, EXT_CSD_HS_TIMING, 1);
@@ -602,6 +603,7 @@ int mmc_startup(struct mmc *mmc)
 	uint mult, freq;
 	u64 cmult, csize;
 	struct mmc_cmd cmd;
+	int csd_struct;
 
 	/* Put the Card in Identify Mode */
 	cmd.cmdidx = MMC_CMD_ALL_SEND_CID;
@@ -688,10 +690,17 @@ int mmc_startup(struct mmc *mmc)
 	else
 		mmc->write_bl_len = 1 << ((cmd.response[3] >> 22) & 0xf);
 
-	if (mmc->high_capacity) {
+	csd_struct = (cmd.response[0] >> 30) & 0x3;
+	if (IS_SD(mmc) && csd_struct > 1) {
+		printf("error: unrecognised CSD structure version %d\n", csd_struct);
+		return -1;
+	}
+
+	if (IS_SD(mmc) && (csd_struct == 1)) {
 		csize = (mmc->csd[1] & 0x3f) << 16
 			| (mmc->csd[2] & 0xffff0000) >> 16;
 		cmult = 8;
+		mmc->block_addr = 1;
 	} else {
 		csize = (mmc->csd[1] & 0x3ff) << 2
 			| (mmc->csd[2] & 0xc0000000) >> 30;

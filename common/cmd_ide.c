@@ -33,6 +33,8 @@
 #include <asm/byteorder.h>
 #include <asm/io.h>
 
+#ifndef CONFIG_MARVELL  /* Marvell has a board specific IDE support */
+
 #if defined(CONFIG_IDE_8xx_DIRECT) || defined(CONFIG_IDE_PCMCIA)
 # include <pcmcia.h>
 #endif
@@ -2112,3 +2114,5 @@ U_BOOT_CMD(
 	"boot from IDE device",
 	"loadAddr dev:part"
 );
+
+#endif //Marvell

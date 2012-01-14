@@ -40,6 +40,7 @@
 #define USB_MAX_HUB			16
 
 #define USB_CNTL_TIMEOUT 100 /* 100ms timeout */
+#define USB_BULK_TIMEOUT        1000
 
 /* String descriptor */
 struct usb_string_descriptor {
@@ -91,6 +92,7 @@ struct usb_endpoint_descriptor {
 	unsigned char	bInterval;
 	unsigned char	bRefresh;
 	unsigned char	bSynchAddress;
+	unsigned char  padding;
 } __attribute__ ((packed)) __attribute__ ((aligned(2)));
 
 /* Interface descriptor */
@@ -134,6 +136,7 @@ enum {
 	PACKET_SIZE_16  = 1,
 	PACKET_SIZE_32  = 2,
 	PACKET_SIZE_64  = 3,
+	PACKET_SIZE_512  = 6,
 };
 
 struct usb_device {

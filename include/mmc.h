@@ -246,6 +246,9 @@ struct mmc {
 	uint f_min;
 	uint f_max;
 	int high_capacity;
+#ifdef CONFIG_MARVELL
+	int block_addr;
+#endif
 	uint bus_width;
 	uint clock;
 	uint card_caps;
@@ -272,7 +275,10 @@ int mmc_init(struct mmc *mmc);
 int mmc_read(struct mmc *mmc, u64 src, uchar *dst, int size);
 struct mmc *find_mmc_device(int dev_num);
 void print_mmc_devices(char separator);
-
+#ifdef CONFIG_MARVELL
+int mmc_dove_init(void);
+int board_mmc_getcd(u8 *cd, struct mmc *mmc);
+#endif
 #ifndef CONFIG_GENERIC_MMC
 int mmc_legacy_init(int verbose);
 #endif

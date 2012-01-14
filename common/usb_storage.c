@@ -813,7 +813,7 @@ do_retry:
 	psrb->cmd[4] = 18;
 	psrb->datalen = 18;
 	psrb->pdata = &srb->sense_buf[0];
-	psrb->cmdlen = 12;
+	psrb->cmdlen=6; /*12*/
 	/* issue the command */
 	result = usb_stor_CB_comdat(psrb, us);
 	USB_STOR_PRINTF("auto request returned %d\n", result);
@@ -880,7 +880,7 @@ static int usb_inquiry(ccb *srb, struct us_data *ss)
 		srb->cmd[0] = SCSI_INQUIRY;
 		srb->cmd[4] = 36;
 		srb->datalen = 36;
-		srb->cmdlen = 12;
+		srb->cmdlen=6; /*12*/
 		i = ss->transport(srb, ss);
 		USB_STOR_PRINTF("inquiry returns %d\n", i);
 		if (i == 0)
@@ -904,7 +904,7 @@ static int usb_request_sense(ccb *srb, struct us_data *ss)
 	srb->cmd[4] = 18;
 	srb->datalen = 18;
 	srb->pdata = &srb->sense_buf[0];
-	srb->cmdlen = 12;
+	srb->cmdlen=6; /*12*/
 	ss->transport(srb, ss);
 	USB_STOR_PRINTF("Request Sense returned %02X %02X %02X\n",
 			srb->sense_buf[2], srb->sense_buf[12],
@@ -921,11 +921,11 @@ static int usb_test_unit_ready(ccb *srb, struct us_data *ss)
 		memset(&srb->cmd[0], 0, 12);
 		srb->cmd[0] = SCSI_TST_U_RDY;
 		srb->datalen = 0;
-		srb->cmdlen = 12;
+		srb->cmdlen=6; /*12*/
 		if (ss->transport(srb, ss) == USB_STOR_TRANSPORT_GOOD)
 			return 0;
 		usb_request_sense(srb, ss);
-		wait_ms(100);
+		wait_ms (1000);
 	} while (retries--);
 
 	return -1;
@@ -940,7 +940,7 @@ static int usb_read_capacity(ccb *srb, struct us_data *ss)
 		memset(&srb->cmd[0], 0, 12);
 		srb->cmd[0] = SCSI_RD_CAPAC;
 		srb->datalen = 8;
-		srb->cmdlen = 12;
+		srb->cmdlen=10; /*12*/
 		if (ss->transport(srb, ss) == USB_STOR_TRANSPORT_GOOD)
 			return 0;
 	} while (retry--);
@@ -959,7 +959,7 @@ static int usb_read_10(ccb *srb, struct us_data *ss, unsigned long start,
 	srb->cmd[5] = ((unsigned char) (start)) & 0xff;
 	srb->cmd[7] = ((unsigned char) (blocks >> 8)) & 0xff;
 	srb->cmd[8] = (unsigned char) blocks & 0xff;
-	srb->cmdlen = 12;
+	srb->cmdlen=10; /*12 */
 	USB_STOR_PRINTF("read10: start %lx blocks %x\n", start, blocks);
 	return ss->transport(srb, ss);
 }
@@ -1249,6 +1249,7 @@ int usb_stor_get_info(struct usb_device *dev, struct us_data *ss,
 	if (usb_inquiry(pccb, ss))
 		return -1;
 
+    udelay(5000000);
 	perq = usb_stor_buf[0];
 	modi = usb_stor_buf[1];
 

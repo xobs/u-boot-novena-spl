@@ -1,0 +1,455 @@
+3-April-2011
+
+Release notes for 88AP510 U-Boot, NQ release: 5.4.4
+===================================================
+
+Table of Contents
+-----------------
+	1. Contents of Release
+	2. Supported boards/CPUs
+	3. How to build U-Boot
+	4. How to upgrade to a new version of U-Boot
+	5. How to boot from UART
+	6. How to use MTD partitions
+	7. How to use UBIFS
+	8. How to use MMC
+	9. How to use USB storage device
+	10. Changes from Previous Releases
+	11. Known Issues
+	12. What's new in u-boot 2009.08
+	13. Disclaimer
+
+1. Contents of Release
+======================
+
+Included in current release:
+	-) doimage tool and DDR register configuration files.
+	-) Binary Image files:
+		1. elf file for debugers (e.g. Lauterbach).
+		2. srec file for external programer.
+		3. u-boot.bin - without BootROM header.
+		4. u-boot-<board_name><soc_name>_<spi/nand>_<1cs/2cs>_<gang>.bin - 
+			U-boot with BootROM header with the boot device is spi or nand, supporting 1 or 2 DRAM chip selects.
+			"gang" indicates NAND Gang Mode support and is optional.
+	-) Marvell Dove's U-Boot source code patch.
+	-) Support
+		- Little endian
+		- Uart
+		- Auto detect of PCI-E 0, PCI-E 1 
+		- Reset
+		- RTC
+		- Gigabit Ethernet port
+		- SPI Flash
+		- SATA IDE
+		- DDR2 and DDR3 Marvell
+		- Boot from SPI & NAND
+		- Thermal sensor reads
+		- USB
+		- SD/MMC
+		- NAND flash
+		- UBI/UBIFS
+		- Sample at reset control by i2c
+
+2. Supported boards/CPU's
+=========================
+
+This U-Boot version supports the following boards:
+
+	DB-88AP510-BP_B		(A0)
+	DB-88AP510-PCAC		(X0)
+	DB-88AP510-BP		(X0)
+	Avenger-D1 Rev 2.0	(X0)
+
+3. How to build U-Boot
+======================
+
+	1. Download U-Boot release 2009.08 from ftp://ftp.denx.de/pub/u-boot/.
+	2. Update the U-Boot release by copying the patch of this release under the source directory:
+		$ tar xjvf u-boot-2009.08.tar.bz2
+		$ mv u-boot-2009.08 u-boot-X.X.X
+		$ tar xvf u-boot-X.X.X.tar (overwrite all when asked).
+	* X.X.X mean the Marvell version used. (for example 5.0.0)
+
+	3. Update your environment to point to the cross compiler in your host machine, e,g, set CROSS_COMPILE to arm-marvell-linux-gnueabi using this command:
+		$ export CROSS_COMPILE=/path/to/crosscompiler/arm-marvell-linux-gnueabi-
+
+	*This U-Boot was built using Marvell 2008q3-13 toolchain (soft VFP).
+
+	4. Build the U-Boot binaries using the relevant script files under the build_scripts directory.
+
+	5. doimage will create a binary file automaticly when compiling. 
+		If you wish to use the doimage tool, it can be found under /tools/doimage_dove/ It can be compiled from there using the make command.
+		you can run ./doimage --help for more help.
+
+4. How to upgrade to a new version of U-Boot
+============================================
+
+	Assuming you have a U-Boot running, follow these instructions:
+	--------------------------------------------------------------
+	You MUST have u-boot 5.1.0 and above in order to use the bubt command. If you're using u-boot versions before
+	5.1.0 (4.X.X) you MUST use the section below: Burning new U-Boot using Lauterbach debugger or Burning new U-Boot using NAND commands.
+	From U-Boot prompt:
+	1. setenv serverip <IP address of your TFTP server>
+	2. setenv ipaddr <IP address for the board>
+	3. bubt <u-boot binary image name> - You can find compiled U-Boot images in the U-Boot release under the images folder.
+	   Select the appropriate image based on your DDR DIMM: 512MB (one side populated) or 1GB (2 sides populated). 
+	   Example: bubt u-boot-db88f510bp_b_spi_2CS.bin
+	4. If you want to override the environment, Answer y when asked.
+
+	Note:
+	-----
+	You must use a compatible U-Boot image according to your boot device and sample at reset configuration. 
+	If you are currently running U-Boot from SPI, then bubt an appropriate U-Boot image from SPI. 
+	If you are currently running U-Boot from NAND, then bubt an appropriate U-Boot image from NAND.
+
+	Burning new U-Boot using Lauterbach debugger:
+	---------------------------------------------
+	1. Connect the JTAG cable to the board and open Lauterbach Trace32 program.
+	2. Turn on the board.
+	3. Run Batchfile -> select the appropriate cmm configuration file for your DDR DIMM. 
+		The cmm files can be found as part of the U-Boot release directory "A0 Lauterbach Scripts".
+	4. Load U-Boot elf file. This file can be found under the release directory:
+		"Images\full images\<board name>\<spi/nand/dram size>\" folder. 
+		Select the file with no extension, called "u-boot-<board name>".
+	5. Run->Go (F7).
+	6. When U-Boot loads you can use the instructions for updating an existing U-Boot above.
+
+	Burning new U-Boot using NAND commands:
+	---------------------------------------
+	1. run the following commands:
+	2. setenv serverip <IP address of your TFTP server>
+	3. setenv ipaddr <IP address for the board>
+	4. tftp 2000000 <image_image>
+		* NOTE: You can find compiled U-Boot images in the U-Boot release under the images folder. 
+		       Select the appropriate image based on your DDR DIMM: 512MB (one side populated) or 1GB (2 sides populated).
+		       Example: bubt u-boot-db88f510bp_b_spi_2CS.bin
+	5. nand erase 0 d0000
+	6. nand write 2000000 0 d0000
+	7. reset
+		* NOTE: all environment variables will be reseted!
+
+5. How to boot from UART
+========================
+	1. Configure the boot source to be 0x10 (you will get the boot ROM prompt)
+	2. Then send DRAM configuration text file (can be found under /tools/doimage_dove/uart_init.txt) which will configure the WL and the CKE/Reset workaround.
+	3. Then type ‘x e’, this will issue the UART execution.
+	4. Then use the x-modem to send the u-boot file (named with _uart).
+	5. u-boot will load.
+		* NOTE: Make sure to configure line delay = 200, for adding delay to the CKE/Rest WA.
+
+6. How to use MTD partitions
+============================
+	1. mtdparts is supported in u-boot version >=5.3.0.
+	2. new environment variable is introduced: mtdparts.
+	3. mtdparts variable in the same one used to pass to linux kernel and should be defined like below:
+		'mtdparts' - partition list
+		mtdparts=mtdparts=<mtd-def>[;<mtd-def>...]
+			<mtd-def>  := <mtd-id>:<part-def>[,<part-def>...]
+			<mtd-id>   := unique device tag used by linux kernel to find mtd device (mtd->name)
+			<part-def> := <size>[@<offset>][<name>][<ro-flag>]
+			<size>     := standard linux memsize OR '-' to denote all remaining space
+			<offset>   := partition start offset within the device
+			<name>     := '(' NAME ')'
+			<ro-flag>  := when set to 'ro' makes partition read-only (not used, passed to kernel)
+	4. for example: mtdparts=mtdparts=dove-nand:4m(boot),-(rootfs)
+	5. the command mtdparts should prints the analyzed partitions according to the mtdparts variable, for example:
+		>> mtdparts 
+		device nand0 <dove-nand>, # parts = 2
+		 #: name                size                    offset                  mask_flags
+		 0: boot                0x000000400000          0x000000000000          0
+		 1: rootfs              0x0001ffc00000          0x000000400000          0
+		
+		active partition: nand0,0 - (boot) 0x000000400000 @ 0x000000000000
+		
+		defaults:
+		mtdids  : none
+		mtdparts: none
+	6. another important variable is the mtdids:
+		'mtdids' - linux kernel mtd device id <-> u-boot device id mapping
+
+		mtdids=<idmap>[,<idmap>,...]
+		<idmap>    := <dev-id>=<mtd-id>
+		<dev-id>   := 'nand'|'nor'|'onenand'<dev-num>
+		<dev-num>  := mtd device number, 0...
+		<mtd-id>   := unique device tag used by linux kernel to find mtd device (mtd->name)
+	7. for example: mtdids=nand0=dove-nand.
+	8. mtdparts variable will move automatically (on default u-boot environment) to the linux kernel, no need
+	   to add it to the console variable as in older u-boot versions.
+	9. it's recommended that you'll use the default values for both of the variables (mtdparts & mtdids).
+
+7. How to use UBIFS
+===================
+	1. UBIFS is supported in u-boot version >=5.3.0.
+	2. for creating UBI partition and volume and creating UBIFS please refer to the UBI documentation.
+	3. after setting the mtdparts & mtdids variables as needed. (SEE paragraph 5), you can scan the mtd
+	   partition for the UBI device.
+	4. use the command: ubi part, to instruct u-boot on which mtd partition the UBI is on.
+		>>ubi part <partition_name> <offset>
+			<partition_name> - the mtd partition name, for example: rootfs.
+			<offset>         - the offset to the UBI VID header, is should be the sector size of the NAND.
+			                   for example: when using GANG mode the value will be 4096, when not the value is 2048.
+	5. for example:
+		>> ubi part rootfs 4096
+		UBI: mtd1 is detached from ubi0
+		Creating 1 MTD partitions on "nand0":
+		0x000000400000-0x000200000000 : "mtd=1"
+		UBI: attaching mtd1 to ubi0
+		UBI: physical eraseblock size:   524288 bytes (512 KiB)
+		UBI: logical eraseblock size:    516096 bytes
+		UBI: smallest flash I/O unit:    4096
+		UBI: VID header offset:          4096 (aligned 4096)
+		UBI: data offset:                8192
+		UBI: attached mtd1 to ubi0
+		UBI: MTD device name:            "mtd=1"
+		UBI: MTD device size:            8188 MiB
+		UBI: number of good PEBs:        16366
+		UBI: number of bad PEBs:         10
+		UBI: max. allowed volumes:       16
+		UBI: wear-leveling threshold:    4096
+		UBI: number of internal volumes: 1
+		UBI: number of user volumes:     1
+		UBI: available PEBs:             0
+		UBI: total number of reserved PEBs: 16366
+		UBI: number of PEBs reserved for bad PEB handling: 163
+		UBI: max/mean erase counter: 7/1
+	6. after u-boot scan finishes with no errors, you can now use the UBIFS on the UBI device.
+	7. to mount a UBIFS use the command: 
+		>>ubifsmount <volume_name>
+		<volume_name> - the name that the volume created with.
+	8. for example:
+		>> ubifsmount lzo
+		UBIFS: mounted UBI device 0, volume 0, name "lzo"
+		UBIFS: mounted read-only
+		UBIFS: file system size:   8355078144 bytes (8159256 KiB, 7968 MiB, 16189 LEBs)
+		UBIFS: journal size:       10452992 bytes (10208 KiB, 9 MiB, 21 LEBs)
+		UBIFS: media format:       w4/r0 (latest is w4/r0)
+		UBIFS: default compressor: zlib
+		UBIFS: reserved for root:  0 bytes (0 KiB)
+	9. now you can ls and load the filesystem on the UBIFS with the commands:
+		ubifsls [directory] - list files 
+			[directory] - optional, files in a 'directory' (default '/' or any other directory, for ex: '/boot')
+
+		ubifsload <addr> <filename> [bytes] - load file 'filename' to address 'addr'
+			<addr>     - address to load the file to.
+			<filename> - the file name to load. for example: /boot/uImage.
+			[bytes]    - optional, bytes to load, when left blank the whole file will be loaded.
+
+8. How to use MMC
+=================
+	1. in order to use MMC use the following commands:
+	2. to scan for MMC use:
+		>> mmc init
+	3. to see MMC detected use:
+		>> mmcinfo <port>
+		<port> - the port the MMC is connected to.
+		         on 510-BP-B board:
+		           U17 is port 0.
+		           U28 is port 1.
+	4. for example:
+		>> mmcinfo 0
+		Device: MV_SDHCI
+		Manufacturer ID: 1
+		OEM: 5041
+		Name: S032B 
+		Tran Speed: 25000000
+		Rd Block Len: 512
+		SD version 1.0
+		High Capacity: No
+		Capacity: 31129600
+		Bus Width: 1-bit
+	5. to list the files on a MMC use:
+		fatls/ext2ls <interface> <dev[:part]> [directory] - list files from 'dev' on 'interface' in a 'directory'
+			<interface> = mmc
+			<dev> = 0
+			[part] - the partition number that used.
+			[directory] - the directory to list (default '/' or any other directory, for ex: '/boot')
+	6. to load files from MMC to memory use:
+		ext2ls/fatload <interface> <dev[:part]>  <addr> <filename> [bytes] - load binary file 'filename' from 'dev' on 'interface'
+			<interface> = mmc
+			<dev> = 0
+			[part] - the partition number that used.
+			<addr> - target address in memory.
+			<filename> - which file to load.
+			[bytes] - size to load or file size when left blank.
+	* Note: use fat or ext2 commands according to the filesystem created on the USB.
+
+9. How to use USB storage device
+================================
+	1. to descover the USB devices connected use the command: usb start.
+		>> usb start
+		(Re)start USB...
+		USB:   Register 10011 NbrPorts 1
+		USB EHCI 1.00
+		scanning bus for devices... 2 USB Device(s) found
+		Waiting for storage device(s) to settle before scanning...
+			scanning bus for storage devices... 1 Storage Device(s) found
+	2. to list the files on a USB use:
+		fatls/ext2ls <interface> <dev[:part]> [directory] - list files from 'dev' on 'interface' in a 'directory'
+			<interface> = usb
+			<dev> = 0
+			[part] - the partition number that used.
+			[directory] - the directory to list (default '/' or any other directory, for ex: '/boot')
+	3. to load files from USB to memory use:
+		ext2ls/fatload <interface> <dev[:part]>  <addr> <filename> [bytes] - load binary file 'filename' from 'dev' on 'interface'
+			<interface> = usb
+			<dev> = 0
+			[part] - the partition number that used.
+			<addr> - target address in memory.
+			<filename> - which file to load.
+			[bytes] - size to load or file size when left blank.
+	* Note: use fat or ext2 commands according to the filesystem created on the USB.
+
+10. Changes from Previous Releases
+==================================
+
+	U-Boot 5.4.4 (3-April-2011)
+	=========================
+	1. DDR3 DRAM parameters update: 0xD08001F0 changed from 0x00000033 to 0x00003F33.
+	2. DVS calibration support:
+		2.1 added support for both low and high DVS modes assign from u-boot.
+		2.2 calibrated value pass-thru to kernel support for low value.
+		2.3 updated kernel must be used to support this feature.
+	3. delays added to USB init.
+
+	U-Boot 5.4.3 (3-March-2011)
+	=========================
+	1. DRAM Write Leveling:
+		1.1 Correct write leveling procedure to identify first transition from “0” to “1”.
+		1.1 CMM file updated as well
+	2. DVS calibration support:
+		2.1 DVS command added. (see help dvs)
+		2.2 calibrated value pass-thru to kernel support.
+	3. Avengers v3.x support added. (added by Braver)
+
+	U-Boot 5.4.2 (19-Dec-2010)
+	=========================
+	1. VSEN updated with 3 decimal places.
+
+	U-Boot 5.4.1 (9-Dec-2010)
+	=========================
+	1. VSEN related bug fixed.
+	2. SDK4.0 compiler support changes merged.
+
+	U-Boot 5.4.0 (8-Dec-2010)
+	=========================
+	1. Dove A1 support.
+	2. VSEN commands update.
+
+	U-Boot 5.3.4 (7-Sep-2010)
+	=========================
+	1. boot from UART support added. 
+		a. UART Images will be created as part of the build scripts.
+		b. DRAM configuration file for UART boot can be found under /tools/doimage_dove/uart_init.txt.
+	2. UBIFS bug fix:
+		a. volumes limit and mtdparts 64bit support fix.
+		b. Unalignment support to solve the UBIFS LZO compression.
+	3. Updating USB regs to the 4.1.9 u-boot USB values.
+	4. Revert DDR3 parameters back to 5.3.2.
+
+	U-Boot 5.3.3 (19-August-2010)
+	=============================
+	1. NAND 12bit support added.
+	2. PCAC PEX Mode (EP) fixes.
+	3. DDR3 parameters update.
+		a. register 0xd0800650 bits 14:12 -> 0
+		b. register 0xd0800660 bits 31:30 -> 0
+	4. SPI Flash erase timing bug fix.
+	5. PCAC 256MB DRAM setting.
+	6. PEX electrical tuning:
+		change PEX PHY register 0x92 using the PEX PHY indirect access to be 0x6f8b instead of 0x6f9e.
+	7. USB & PEX registers update:
+		a. USB 0x5x430 [ 3:2 ] “01” ( LPF_COEFC )
+		b. USB 0x5x430 [ 7:4 ] “1100” ( SQ_THRESH )
+		c. USB 0x5x420 [ 16:14 ] “101”  ( IMP_CAL_VTH )
+		d. PEX 0xd02e0 [ 3:0 ] “1111”  ( Pex clock current drive )
+
+	U-Boot 5.3.2 (18-July-2010)
+	===========================
+	1. Avengers NAND support.
+	2. Boot from NAND support, saveenv and bubt fixed.
+	3. SATA disk >128GB support.
+
+	U-Boot 5.3.1 (13-July-2010)
+	===========================
+	1. DB88AP510_BP_B arch number changes to 1788 (same as the A board).
+
+	U-Boot 5.3.0 (12-July-2010)
+	===========================
+	1. A0 initial release.
+	2. NAND support.
+	3. UBIFS support. none, zlib & lzo commpression supported.
+	4. >4GB mtd & ubi volumes are supported.
+	5. mtd partitioning support - mtdparts environment param added to support both u-boot and linux.
+	6. DDR CS0 to CS1 WL copy, info prints related bugs fixed.
+	7. bugs fixes.
+
+	U-Boot 5.0.1 (14-June-2010)
+	===========================
+	1. Flash Block Protection support added to STMICRO and MACRONIX libaries.
+	2. bubt and saveenv commands updated to support the protection.
+	3. CONFIG_SPI_FLASH_PROTECTION flash must be set to enable the protection.
+	4. minor fix in the avengers build scripts.
+	5. added BootROM startup prints of status and so.
+
+	U-Boot 5.0.0 (13-June-2010)
+	===========================
+	1. Marvell Dove initial release based on U-Boot 2009.08.
+	2. Based on Marvell Dove U-Boot 4.4.7.
+	3. For all 4.4.7 version release noted please see the 4.4.7 ReleaseNotes.txt file.
+	4. NOTE: You MUST unprotect the flash AFTER burning the new u-boot and BEFORE resetting!
+
+11. Known issues
+================
+	1. SK98 network adapters do not work properly.
+	2. The command usb start will only work the first time it is run.
+	3. Boot from USB only works on USB port 0 (CON3).
+	4. Only 8 UBI volumes are supported by u-boot.
+
+12. What's new in u-boot 2009.08
+================================
+	1. SPI flash is used with the command sf. please see help sf for more info.
+	2. i2c command changed, please use i2c dev 1/0 to switch between the buses.
+	3. Makefile is now includes the doimage command. no need to run it separatly.
+	4. before compiling the u-boot please define the cross compiler by using:
+		$ export CROSS_COMPILE=/path/to/cross/compiler/arm-marvell-linux-gnueabi-
+
+13. Disclaimer
+==============
+This document provides preliminary information about the products described, and such information should not be used for
+purpose of final design. Visit the Marvell® web site at www.marvell.com for the latest information on Marvell products.
+
+No part of this document may be reproduced or transmitted in any form or by any means, electronic or mechanical, including 
+photocopying and recording, for any purpose, without the express written permission of Marvell. Marvell retains the right 
+to make changes to this document at any time, without notice. Marvell makes no warranty of any kind, expressed or implied, 
+with regard to any information contained in this document, including, but not limited to, the implied warranties of 
+merchantability or fitness for any particular purpose. Further, Marvell does not warrant the accuracy or completeness of 
+the information, text, graphics, or other items contained within this document. Marvell makes no commitment either to 
+update or to keep current the information contained in this document. Marvell products are not designed for use in 
+life-support equipment or applications that would cause a life-threatening situation if any such products failed. 
+Do not use Marvell products in these types of equipment or applications. The user should contact Marvell to obtain the 
+latest specifications before finalizing a product design. Marvell assumes no responsibility, either for use of these 
+products or for any infringements of patents and trademarks, or other rights of third parties resulting from its use. 
+No license is granted under any patents, patent rights, or trademarks of Marvell. These products may include one or more 
+optional functions. The user has the choice of implementing any particular optional function. Should the user choose to 
+implement any of these optional functions, it is possible that the use could be subject to third party intellectual 
+property rights. Marvell recommends that the user investigate whether third party intellectual property rights are 
+relevant to the intended use of these products and obtain licenses as appropriate under relevant intellectual property 
+rights. 
+Marvell comprises Marvell Technology Group Ltd. (MTGL) and its subsidiaries, Marvell International Ltd. (MIL), 
+Marvell Semiconductor, Inc. (MSI), Marvell Asia Pte Ltd. (MAPL), Marvell Japan K.K. (MJKK), 
+Marvell Semiconductor Israel Ltd. (MSIL), SysKonnect GmbH, and Radlan Computer Communications, Ltd.
+Export Controls.  With respect to any of Marvell’s Information, the user or recipient, in the absence of appropriate U.S. 
+government authorization, agrees: 1) not to re-export or release any such information consisting of technology, software 
+or source code controlled for national security reasons by the U.S. Export Control Regulations ("EAR"), to a national of 
+EAR Country Groups D:1 or E:2; 2) not to export the direct product of such technology or such software, to EAR Country 
+Groups D:1 or E:2, if such technology or software and direct products thereof are controlled for national security reasons 
+by the EAR; and, 3) in the case of technology controlled for national security reasons under the EAR where the direct 
+product of the technology is a complete plant or component of a plant, not to export to EAR Country Groups D:1 or E:2 the 
+direct product of the plant or major component thereof, if such direct product is controlled for national security reasons 
+by the EAR, or is subject to controls under the U.S. Munitions List  ("USML"). At all times hereunder, the recipient of 
+any such information agrees that they shall be deemed to have manually signed this document in connection with their
+receipt of any such information.
+Copyright © 2004.  Marvell.  All rights reserved.  Marvell, the Marvell logo, Moving Forward Faster, Alaska, and GalNet
+are registered trademarks of Marvell.  Discovery, Fastwriter, GalTis, Horizon, Libertas, Link Street, NetGX,
+PHY Advantage, Prestera, Raising The Technology Bar, UniMAC, Virtual Cable Tester, and Yukon are trademarks of Marvell.
+All other trademarks are the property of their respective owners.

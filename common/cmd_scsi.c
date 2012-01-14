@@ -33,6 +33,7 @@
 #include <scsi.h>
 #include <image.h>
 #include <pci.h>
+//#include <asm/byteorder.h>
 
 #ifdef CONFIG_SCSI_SYM53C8XX
 #define SCSI_VEND_ID	0x1000
@@ -45,6 +46,11 @@
 
 #define SCSI_VEND_ID 0x10b9
 #define SCSI_DEV_ID  0x5288
+
+#elif defined CONFIG_SATA_6121
+
+#define SCSI_VEND_ID 0x11ab
+#define SCSI_DEV_ID  0x6121
 
 #else
 #error no scsi device defined

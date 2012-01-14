@@ -102,6 +102,21 @@ OBJ_FILES-$(CONFIG_INCA_IP) += inca-swap-bytes.o
 OBJ_FILES-$(CONFIG_NETCONSOLE) += ncb.o
 OBJ_FILES-y += os_support.o
 
+ifeq ($(VENDOR),mv_feroceon)
+ifeq ($(BOARD),config_kw)
+	TOOLSUBDIRS += doimage_kw
+endif
+ifeq ($(BOARD),config_kw2)
+	TOOLSUBDIRS += doimage_kw2
+endif
+endif
+ifeq ($(VENDOR),marvell)
+ifeq ($(BOARD),config_dove)
+	TOOLSUBDIRS += doimage_dove
+	TOOLSUBDIRS += brom_bin_hdr
+endif
+endif
+
 # Don't build by default
 #ifeq ($(ARCH),ppc)
 #BIN_FILES-y += mpc86x_clk$(SFX)
@@ -144,7 +159,7 @@ LIBFDT_OBJS	:= $(addprefix $(obj),$(LIBFDT_OBJ_FILES-y))
 CPPFLAGS   = -idirafter $(SRCTREE)/include \
 		-idirafter $(OBJTREE)/include2 \
 		-idirafter $(OBJTREE)/include \
-	        -I $(SRCTREE)/libfdt \
+		-I $(SRCTREE)/libfdt \
 		-I $(SRCTREE)/tools \
 		-DTEXT_BASE=$(TEXT_BASE) -DUSE_HOSTCC \
 		-D__KERNEL_STRICT_NAMES

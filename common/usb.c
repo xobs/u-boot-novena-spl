@@ -65,7 +65,7 @@
 
 #define USB_BUFSIZ	512
 
-static struct usb_device usb_dev[USB_MAX_DEVICE];
+struct usb_device usb_dev[USB_MAX_DEVICE];
 static int dev_index;
 static int running;
 static int asynch_allowed;

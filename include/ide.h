@@ -42,8 +42,16 @@
 
 #ifdef CONFIG_SYS_64BIT_LBA
 typedef uint64_t lbaint_t;
+#define IDE_BLOCK_NUMBER_MASK 0x0000fffff0000000
+#define LBA_LOW_REG_SHIFT	24
+#define LBA_MID_REG_SHIFT	32
+#define LBA_HIGH_REG_SHIFT	40
 #else
 typedef ulong lbaint_t;
+#define IDE_BLOCK_NUMBER_MASK 0xf0000000
+#define LBA_LOW_REG_SHIFT	24
+#define LBA_MID_REG_SHIFT	0
+#define LBA_HIGH_REG_SHIFT	0
 #endif
 
 /*

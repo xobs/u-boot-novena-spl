@@ -205,6 +205,46 @@ struct tag_memclk {
 	u32 fmemclk;
 };
 
+#if defined (CONFIG_MARVELL_TAG)
+/* Marvell uboot parameters */
+#define ATAG_MV_UBOOT   0x41000403
+
+#define MAX_NUM_OF_HEADERS	16
+#define MAX_DRAM_INIT_PAIRS	260
+
+typedef struct __mvDramRegInit
+{
+	u32 reg_addr;
+	u32 reg_value;
+} MV_DRAM_REG_INIT;
+
+typedef struct __mvDramInitCtrl
+{
+	u32 freq_mask;
+	u16 start_index;
+	u16 size; 
+	u32 flags;
+} MV_DRAM_INIT_CTRL;
+
+typedef struct __mvDramInit
+{
+	MV_DRAM_INIT_CTRL dram_init_ctrl[MAX_NUM_OF_HEADERS];
+	MV_DRAM_REG_INIT reg_init[MAX_DRAM_INIT_PAIRS];
+} MV_DRAM_INIT;
+
+struct tag_mv_uboot {
+	u32				uboot_version;
+	MV_DRAM_INIT	mv_dram_init;
+};
+
+struct tag_mv_dvs {
+	u32		uboot_version;
+	u32		dvs_values;
+	u32		reserved0;
+	u32		reserved1;
+};
+#endif /* CONFIG_MARVELL_TAG */
+
 struct tag {
 	struct tag_header hdr;
 	union {
@@ -227,6 +267,13 @@ struct tag {
 		 * DC21285 specific
 		 */
 		struct tag_memclk	memclk;
+#if defined (CONFIG_MARVELL_TAG)
+		/*
+		 * Marvell specific
+		 */
+		struct tag_mv_uboot		mv_uboot;
+		struct tag_mv_dvs		mv_dvs;
+#endif
 	} u;
 };
 

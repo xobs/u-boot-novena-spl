@@ -173,14 +173,28 @@ static int get_partition_info_extended (block_dev_desc_t *dev_desc, int ext_part
 			dev_desc->dev, ext_part_sector);
 		return -1;
 	}
+#ifdef CONFIG_MARVELL
+	i = test_block_type(buffer);
+	if (i == -1) {
+#else
 	if (buffer[DOS_PART_MAGIC_OFFSET] != 0x55 ||
 		buffer[DOS_PART_MAGIC_OFFSET + 1] != 0xaa) {
+#endif
 		printf ("bad MBR sector signature 0x%02x%02x\n",
 			buffer[DOS_PART_MAGIC_OFFSET],
 			buffer[DOS_PART_MAGIC_OFFSET + 1]);
 		return -1;
 	}
-
+#ifdef CONFIG_MARVELL
+	if(i==DOS_PBR) {
+		info->boot_ind = 0;
+		info->blksz = 512;
+		info->start = 0;
+		info->size = dev_desc->lba;
+		sprintf (info->name, "usbd01");
+		return 0;
+	}
+#endif
 	/* Print all primary/logical partitions */
 	pt = (dos_partition_t *) (buffer + DOS_PART_TBL_OFFSET);
 	for (i = 0; i < 4; i++, pt++) {
@@ -213,6 +227,12 @@ static int get_partition_info_extended (block_dev_desc_t *dev_desc, int ext_part
 					sprintf ((char *)info->name, "docd%c%d",
 						'a' + dev_desc->dev, part_num);
 					break;
+#ifdef CONFIG_MARVELL
+				case IF_TYPE_MMC:
+					sprintf ((char *)info->name, "mmcd%c%d",
+						'a' + dev_desc->dev, part_num);
+					break;
+#endif
 				default:
 					sprintf ((char *)info->name, "xx%c%d",
 						'a' + dev_desc->dev, part_num);

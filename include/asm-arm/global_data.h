@@ -45,6 +45,10 @@ typedef	struct	global_data {
 #ifdef CONFIG_VFD
 	unsigned char	vfd_type;	/* display type */
 #endif
+#ifdef CONFIG_MARVELL
+	unsigned long  bus_clk;
+        unsigned int tclk;
+#endif
 #if 0
 	unsigned long	cpu_clk;	/* CPU clock in Hz!		*/
 	unsigned long	bus_clk;
@@ -52,6 +56,11 @@ typedef	struct	global_data {
 	unsigned long	reset_status;	/* reset status register at boot */
 #endif
 	void		**jt;		/* jump table */
+#ifdef CONFIG_MARVELL
+	phys_size_t	ram_size;	/* RAM size alior: was unsigned long ram_size; in 1.1.4 code*/
+	unsigned int ddr_clk;
+#endif
+
 } gd_t;
 
 /*
@@ -65,6 +74,7 @@ typedef	struct	global_data {
 #define	GD_FLG_LOGINIT	0x00020		/* Log Buffer has been initialized	*/
 #define GD_FLG_DISABLE_CONSOLE	0x00040		/* Disable console (in & out)	 */
 
-#define DECLARE_GLOBAL_DATA_PTR     register volatile gd_t *gd asm ("r8")
+#define DECLARE_GLOBAL_DATA_PTR
+register volatile gd_t *gd asm ("r8");
 
 #endif /* __ASM_GBL_DATA_H */

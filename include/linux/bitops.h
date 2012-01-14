@@ -36,7 +36,14 @@ static inline int generic_ffs(int x)
 	}
 	return r;
 }
-
+#ifdef CONFIG_MARVELL
+static inline unsigned long generic_ffs64(unsigned long long x)
+{
+	if (((unsigned long)x) == 0UL)
+		return generic_ffs((unsigned long)(x >> 32)) + 32;
+	return generic_ffs((unsigned long)x);
+}
+#endif
 /*
  * hweightN: returns the hamming weight (i.e. the number
  * of bits set) of a N-bit word
