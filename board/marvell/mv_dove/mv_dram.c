@@ -1244,6 +1244,7 @@ int dram_init (void)
 	
 
 #ifndef RD_88F6781
+#ifndef CUBOX
 	if (mvBoardDdrTypeGet() != 0)
 	{
 		/* Sanity Check - Write Leveling values should not be all zeros */
@@ -1281,7 +1282,7 @@ int dram_init (void)
 	}
 
 	dram_init_setup(); /* only call this after setting write leveling values */
-
+#endif
 #endif
 
 
