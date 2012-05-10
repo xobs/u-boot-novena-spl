@@ -25,152 +25,16 @@
 
 #include <common.h>
 #include <ext2fs.h>
+#include <ext_common.h>
 #include <malloc.h>
 #include <asm/byteorder.h>
 
 extern int ext2fs_devread (int sector, int byte_offset, int byte_len,
 			   char *buf);
 
-/* Magic value used to identify an ext2 filesystem.  */
-#define	EXT2_MAGIC		0xEF53
-/* Amount of indirect blocks in an inode.  */
-#define INDIRECT_BLOCKS		12
-/* Maximum lenght of a pathname.  */
-#define EXT2_PATH_MAX		4096
-/* Maximum nesting of symlinks, used to prevent a loop.  */
-#define	EXT2_MAX_SYMLINKCNT	8
-
-/* Filetype used in directory entry.  */
-#define	FILETYPE_UNKNOWN	0
-#define	FILETYPE_REG		1
-#define	FILETYPE_DIRECTORY	2
-#define	FILETYPE_SYMLINK	7
-
-/* Filetype information as used in inodes.  */
-#define FILETYPE_INO_MASK	0170000
-#define FILETYPE_INO_REG	0100000
-#define FILETYPE_INO_DIRECTORY	0040000
-#define FILETYPE_INO_SYMLINK	0120000
-
-/* Bits used as offset in sector */
-#define DISK_SECTOR_BITS        9
-
-/* Log2 size of ext2 block in 512 blocks.  */
-#define LOG2_EXT2_BLOCK_SIZE(data) (__le32_to_cpu (data->sblock.log2_block_size) + 1)
-
-/* Log2 size of ext2 block in bytes.  */
-#define LOG2_BLOCK_SIZE(data)	   (__le32_to_cpu (data->sblock.log2_block_size) + 10)
-
-/* The size of an ext2 block in bytes.  */
-#define EXT2_BLOCK_SIZE(data)	   (1 << LOG2_BLOCK_SIZE(data))
-
-/* The ext2 superblock.  */
-struct ext2_sblock {
-	uint32_t total_inodes;
-	uint32_t total_blocks;
-	uint32_t reserved_blocks;
-	uint32_t free_blocks;
-	uint32_t free_inodes;
-	uint32_t first_data_block;
-	uint32_t log2_block_size;
-	uint32_t log2_fragment_size;
-	uint32_t blocks_per_group;
-	uint32_t fragments_per_group;
-	uint32_t inodes_per_group;
-	uint32_t mtime;
-	uint32_t utime;
-	uint16_t mnt_count;
-	uint16_t max_mnt_count;
-	uint16_t magic;
-	uint16_t fs_state;
-	uint16_t error_handling;
-	uint16_t minor_revision_level;
-	uint32_t lastcheck;
-	uint32_t checkinterval;
-	uint32_t creator_os;
-	uint32_t revision_level;
-	uint16_t uid_reserved;
-	uint16_t gid_reserved;
-	uint32_t first_inode;
-	uint16_t inode_size;
-	uint16_t block_group_number;
-	uint32_t feature_compatibility;
-	uint32_t feature_incompat;
-	uint32_t feature_ro_compat;
-	uint32_t unique_id[4];
-	char volume_name[16];
-	char last_mounted_on[64];
-	uint32_t compression_info;
-};
-
-/* The ext2 blockgroup.  */
-struct ext2_block_group {
-	uint32_t block_id;
-	uint32_t inode_id;
-	uint32_t inode_table_id;
-	uint16_t free_blocks;
-	uint16_t free_inodes;
-	uint16_t used_dir_cnt;
-	uint32_t reserved[3];
-};
-
-/* The ext2 inode.  */
-struct ext2_inode {
-	uint16_t mode;
-	uint16_t uid;
-	uint32_t size;
-	uint32_t atime;
-	uint32_t ctime;
-	uint32_t mtime;
-	uint32_t dtime;
-	uint16_t gid;
-	uint16_t nlinks;
-	uint32_t blockcnt;	/* Blocks of 512 bytes!! */
-	uint32_t flags;
-	uint32_t osd1;
-	union {
-		struct datablocks {
-			uint32_t dir_blocks[INDIRECT_BLOCKS];
-			uint32_t indir_block;
-			uint32_t double_indir_block;
-			uint32_t tripple_indir_block;
-		} blocks;
-		char symlink[60];
-	} b;
-	uint32_t version;
-	uint32_t acl;
-	uint32_t dir_acl;
-	uint32_t fragment_addr;
-	uint32_t osd2[3];
-};
-
-/* The header of an ext2 directory entry.  */
-struct ext2_dirent {
-	uint32_t inode;
-	uint16_t direntlen;
-	uint8_t namelen;
-	uint8_t filetype;
-};
-
-struct ext2fs_node {
-	struct ext2_data *data;
-	struct ext2_inode inode;
-	int ino;
-	int inode_read;
-};
-
-/* Information about a "mounted" ext2 filesystem.  */
-struct ext2_data {
-	struct ext2_sblock sblock;
-	struct ext2_inode *inode;
-	struct ext2fs_node diropen;
-};
-
-
-typedef struct ext2fs_node *ext2fs_node_t;
 
 struct ext2_data *ext2fs_root = NULL;
-ext2fs_node_t ext2fs_file = NULL;
+struct ext2fs_node *ext2fs_file;
 int symlinknest = 0;
 uint32_t *indir1_block = NULL;
 int indir1_size = 0;
@@ -246,14 +110,14 @@ static int ext2fs_read_inode
 }
 
 
-void ext2fs_free_node (ext2fs_node_t node, ext2fs_node_t currroot) {
+void ext2fs_free_node (struct ext2fs_node *node, struct ext2fs_node *currroot) {
 	if ((node != &ext2fs_root->diropen) && (node != currroot)) {
 		free (node);
 	}
 }
 
 
-static int ext2fs_read_block (ext2fs_node_t node, int fileblock) {
+static int ext2fs_read_block (struct ext2fs_node *node, int fileblock) {
 	struct ext2_data *data = node->data;
 	struct ext2_inode *inode = &node->inode;
 	int blknr;
@@ -393,7 +257,8 @@ static int ext2fs_read_block (ext2fs_node_t node, int fileblock) {
 
 
 int ext2fs_read_file
-	(ext2fs_node_t node, int pos, unsigned int len, char *buf) {
+	(struct ext2fs_node *node, int pos, unsigned int len, char *buf)
+{
 	int i;
 	int blockcnt;
 	int log2blocksize = LOG2_EXT2_BLOCK_SIZE (node->data);
@@ -452,8 +317,8 @@ int ext2fs_read_file
 	return (len);
 }
 
-
-static int ext2fs_iterate_dir (ext2fs_node_t dir, char *name, ext2fs_node_t * fnode, int *ftype)
+int ext2fs_iterate_dir(struct ext2fs_node *dir, char *name,
+					struct ext2fs_node **fnode, int *ftype)
 {
 	unsigned int fpos = 0;
 	int status;
@@ -483,7 +348,7 @@ static int ext2fs_iterate_dir (ext2fs_node_t dir, char *name, ext2fs_node_t * fn
 		if (dirent.namelen != 0) {
 			char *filename;
 			filename = (char*)malloc(dirent.namelen + 1);
-			ext2fs_node_t fdiro;
+			struct ext2fs_node *fdiro;
 			int type = FILETYPE_UNKNOWN;
 
 			status = ext2fs_read_file (diro,
@@ -586,8 +451,8 @@ static int ext2fs_iterate_dir (ext2fs_node_t dir, char *name, ext2fs_node_t * fn
 	return (0);
 }
 
-
-static char *ext2fs_read_symlink (ext2fs_node_t node) {
+static char *ext2fs_read_symlink(struct ext2fs_node *node)
+{
 	char *symlink;
 	struct ext2fs_node *diro = node;
 	int status;
@@ -624,15 +489,16 @@ static char *ext2fs_read_symlink (ext2fs_node_t node) {
 
 
 int ext2fs_find_file1
-	(const char *currpath,
-	 ext2fs_node_t currroot, ext2fs_node_t * currfound, int *foundtype) {
+	(const char *currpath, struct ext2fs_node *currroot,
+		struct ext2fs_node **currfound, int *foundtype)
+{
 	char fpath[strlen (currpath) + 1];
 	char *name = fpath;
 	char *next;
 	int status;
 	int type = FILETYPE_DIRECTORY;
-	ext2fs_node_t currnode = currroot;
-	ext2fs_node_t oldnode = currroot;
+	struct ext2fs_node *currnode = currroot;
+	struct ext2fs_node *oldnode = currroot;
 
 	strncpy (fpath, currpath, strlen (currpath) + 1);
 
@@ -728,8 +594,9 @@ int ext2fs_find_file1
 
 
 int ext2fs_find_file
-	(const char *path,
-	 ext2fs_node_t rootnode, ext2fs_node_t * foundnode, int expecttype) {
+	(const char *path, struct ext2fs_node *rootnode,
+	struct ext2fs_node **foundnode, int expecttype)
+{
 	int status;
 	int foundtype = FILETYPE_DIRECTORY;
 
@@ -755,7 +622,7 @@ int ext2fs_find_file
 
 
 int ext2fs_ls (char *dirname) {
-	ext2fs_node_t dirnode;
+	struct ext2fs_node *dirnode;
 	int status;
 
 	if (ext2fs_root == NULL) {
@@ -775,7 +642,7 @@ int ext2fs_ls (char *dirname) {
 
 
 int ext2fs_open (char *filename) {
-	ext2fs_node_t fdiro = NULL;
+	struct ext2fs_node *fdiro = NULL;
 	int status;
 	int len;
 
@@ -805,8 +672,8 @@ fail:
 }
 
 
-int ext2fs_close (void
-	) {
+int ext2fs_close(void)
+{
 	if ((ext2fs_file != NULL) && (ext2fs_root != NULL)) {
 		ext2fs_free_node (ext2fs_file, &ext2fs_root->diropen);
 		ext2fs_file = NULL;
