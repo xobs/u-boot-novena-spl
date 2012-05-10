@@ -125,6 +125,7 @@ extern unsigned int mvTclkGet(void);
 
 /* FS supported */
 #define CONFIG_CMD_EXT2
+#define CONFIG_CMD_EXT4
 #undef CONFIG_CMD_JFFS2
 #define CONFIG_CMD_FAT
 #define CONFIG_SUPPORT_VFAT
