@@ -1,15 +1,15 @@
 /*
  * (C) Copyright 2011 - 2012 Samsung Electronics
  * EXT4 filesystem implementation in Uboot by
- * Uma Shankar &lt;<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">uma.shankar at samsung.com</A>&gt;
- * Manjunatha C Achar &lt;<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">a.manjunatha at samsung.com</A>&gt;
+ * Uma Shankar <uma.shankar at samsung.com>
+ * Manjunatha C Achar <a.manjunatha at samsung.com>
  *
  * Data structures and headers for ext4 support have been taken from
  * ext2 ls load support in Uboot
  *
  * (C) Copyright 2004
- * esd gmbh &lt;www.esd-electronics.com&gt;
- * Reinhard Arlt &lt;<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">reinhard.arlt at esd-electronics.com</A>&gt;
+ * esd gmbh <www.esd-electronics.com>
+ * Reinhard Arlt <reinhard.arlt at esd-electronics.com>
  *
  * based on code from grub2 fs/ext2.c and fs/fshelp.c by
  * GRUB  --  GRand Unified Bootloader

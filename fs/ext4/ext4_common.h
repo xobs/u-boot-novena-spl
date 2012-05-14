@@ -1,14 +1,14 @@
 /*
  * (C) Copyright 2011 - 2012 Samsung Electronics
  * EXT4 filesystem implementation in Uboot by
- * Uma Shankar <<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">uma.shankar at samsung.com</A>>
- * Manjunatha C Achar <<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">a.manjunatha at samsung.com</A>>
+ * Uma Shankar <uma.shankar at samsung.com>
+ * Manjunatha C Achar <a.manjunatha at samsung.com>
  *
  * ext4ls and ext4load :  based on ext2 ls load support in Uboot.
  *
  * (C) Copyright 2004
  * esd gmbh <www.esd-electronics.com>
- * Reinhard Arlt <<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">reinhard.arlt at esd-electronics.com</A>>
+ * Reinhard Arlt <reinhard.arlt at esd-electronics.com>
  *
  * based on code from grub2 fs/ext2.c and fs/fshelp.c by
  * GRUB  --  GRand Unified Bootloader
@@ -60,7 +60,7 @@
 extern unsigned long part_offset;
 int ext4fs_read_inode(struct ext2_data *data, int ino,
 		      struct ext2_inode *inode);
-int ext4fs_read_file(struct ext2fs_node *node, int pos,
+int ext4fs_read_file(struct ext2fs_node *node, unsigned long pos,
 		unsigned int len, char *buf);
 int ext4fs_find_file(const char *path, struct ext2fs_node *rootnode,
 			struct ext2fs_node **foundnode, int expecttype);

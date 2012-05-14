@@ -9,8 +9,9 @@
  *		       Qi bootloader
  *
  * (C) Copyright 2004
- * esd gmbh &lt;www.esd-electronics.com>
- * Reinhard Arlt &lt;<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">reinhard.arlt at esd-electronics.com</A>>
+ * esd gmbh <www.esd-electronics.com>
+ * Reinhard Arlt http://lists.denx.de/mailman/listinfo/u-boot
+ * <reinhard.arlt at esd-electronics.com>
  *
  * based on code from grub2 fs/ext2.c and fs/fshelp.c by
  * GRUB  --  GRand Unified Bootloader
@@ -95,16 +96,16 @@ void ext4fs_free_node(struct ext2fs_node *node, struct ext2fs_node *currroot)
  * Optimized read file API : collects and defers contiguous sector
  * reads into one potentially more efficient larger sequential read action
  */
-int ext4fs_read_file(struct ext2fs_node *node, int pos,
+int ext4fs_read_file(struct ext2fs_node *node, unsigned long pos,
 		     unsigned int len, char *buf)
 {
 	int i;
-	int blockcnt;
+	unsigned long blockcnt;
 	int log2blocksize = LOG2_EXT2_BLOCK_SIZE(node->data);
 	int blocksize = 1 << (log2blocksize + DISK_SECTOR_BITS);
 	unsigned int filesize = __le32_to_cpu(node->inode.size);
 	int previous_block_number = -1;
-	int delayed_start = 0;
+	unsigned long delayed_start = 0;
 	int delayed_extent = 0;
 	int delayed_skipfirst = 0;
 	int delayed_next = 0;
@@ -119,7 +120,7 @@ int ext4fs_read_file(struct ext2fs_node *node, int pos,
 
 	for (i = pos / blocksize; i < blockcnt; i++) {
 		int blknr;
-		int blockoff = pos % blocksize;
+		unsigned long blockoff = pos % blocksize;
 		int blockend = blocksize;
 		int skipfirst = 0;
 		blknr = read_allocated_block(&(node->inode), i);
