@@ -1,8 +1,8 @@
 /*
  * (C) Copyright 2011 - 2012 Samsung Electronics
  * EXT4 filesystem implementation in Uboot by
- * Uma Shankar &lt;<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">uma.shankar at samsung.com</A>>
- * Manjunatha C Achar &lt;<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">a.manjunatha at samsung.com</A>>
+ * Uma Shankar <uma.shankar at samsung.com>
+ * Manjunatha C Achar <a.manjunatha at samsung.com>
  *
  * ext4ls and ext4load : Based on ext2 ls and load support in Uboot.
  *		       Ext4 read optimization taken from Open-Moko
@@ -10,8 +10,7 @@
  *
  * (C) Copyright 2004
  * esd gmbh <www.esd-electronics.com>
- * Reinhard Arlt http://lists.denx.de/mailman/listinfo/u-boot
- * <reinhard.arlt at esd-electronics.com>
+ * Reinhard Arlt <reinhard.arlt at esd-electronics.com>
  *
  * based on code from grub2 fs/ext2.c and fs/fshelp.c by
  * GRUB  --  GRand Unified Bootloader
@@ -127,8 +126,6 @@ int ext4fs_read_file(struct ext2fs_node *node, unsigned long pos,
 		if (blknr < 0)
 			return -1;
 
-		blknr = blknr << log2blocksize;
-
 		/* Last block.  */
 		if (i == blockcnt - 1) {
 			blockend = (len + pos) % blocksize;
@@ -138,11 +135,15 @@ int ext4fs_read_file(struct ext2fs_node *node, unsigned long pos,
 				blockend = blocksize;
 		}
 
+
 		/* First block. */
 		if (i == pos / blocksize) {
 			skipfirst = blockoff;
 			blockend -= skipfirst;
 		}
+
+		blknr = blknr << log2blocksize;
+
 		if (blknr) {
 			int status;
 
@@ -189,6 +190,7 @@ int ext4fs_read_file(struct ext2fs_node *node, unsigned long pos,
 		}
 		buf += blocksize - skipfirst;
 	}
+
 	if (previous_block_number != -1) {
 		/* spill */
 		status = ext4fs_devread(delayed_start,

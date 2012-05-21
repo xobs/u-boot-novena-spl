@@ -1,18 +1,18 @@
 /*
  * (C) Copyright 2011 - 2012 Samsung Electronics
  * EXT4 filesystem implementation in Uboot by
- * Uma Shankar <<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">uma.shankar at samsung.com</A>>
- * Manjunatha C Achar <<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">a.manjunatha at samsung.com</A>>
+ * Uma Shankar <uma.shankar at samsung.com>
+ * Manjunatha C Achar <a.manjunatha at samsung.com>
  *
  * made from existing ext2/dev.c file of Uboot
  * (C) Copyright 2004
  * esd gmbh <www.esd-electronics.com>
- * Reinhard Arlt <<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">reinhard.arlt at esd-electronics.com</A>>
+ * Reinhard Arlt <reinhard.arlt at esd-electronics.com>
  *
  * based on code of fs/reiserfs/dev.c by
  *
  * (C) Copyright 2003 - 2004
- * Sysgo AG, <www.elinos.com>, Pavel Bartusek <<A HREF="http://lists.denx.de/mailman/listinfo/u-boot">pba at sysgo.com</A>>
+ * Sysgo AG, <www.elinos.com>, Pavel Bartusek <pba at sysgo.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

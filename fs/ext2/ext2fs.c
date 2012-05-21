@@ -282,7 +282,7 @@ int ext2fs_read_file
 		if (blknr < 0) {
 			return (-1);
 		}
-		blknr = blknr << log2blocksize;
+		//		blknr = blknr << log2blocksize;
 
 		/* Last block.  */
 		if (i == blockcnt - 1) {
@@ -300,6 +300,30 @@ int ext2fs_read_file
 			blockend -= skipfirst;
 		}
 
+
+		/* grab middle blocks in one go */
+		if (i != pos / blocksize && i != blockcnt - 1 && blockcnt > 3) {
+		  int oldblk = blknr;
+		  int blocknxt;
+		  while (i < blockcnt - 1) {
+		    blocknxt = ext2fs_read_block(node, i + 1);
+		    if (blocknxt == (oldblk + 1)) {
+		      oldblk = blocknxt;
+		      i++;
+		    } else {
+		      blocknxt = ext2fs_read_block(node, i);
+		      break;
+		    }
+		  }
+		  
+		  if (oldblk == blknr)
+		    blockend = blocksize;
+		  else
+		    blockend = (1 + blocknxt - blknr) * blocksize;
+		}
+		
+		blknr = blknr << log2blocksize;
+
 		/* If the block number is 0 this block is not stored on disk but
 		   is zero filled instead.  */
 		if (blknr) {
@@ -312,7 +336,7 @@ int ext2fs_read_file
 		} else {
 			memset (buf, 0, blocksize - skipfirst);
 		}
-		buf += blocksize - skipfirst;
+		buf += blockend - skipfirst;
 	}
 	return (len);
 }
