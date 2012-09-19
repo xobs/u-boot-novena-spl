@@ -694,9 +694,10 @@ ethaddr=${ethaddr} ${netbsd_netconfig}");
 
 #if (CONFIG_BOOTDELAY >= 0)
 
+#if 0 /* Buggy code. Should be never here in first place. We want to force those env variables on every boot */
         env = getenv("bootcmd");
         if(!env)
-
+#endif
 #if defined(CONFIG_SYS_HUSH_PARSER)
 #ifdef CUBOX
 	setenv("bootscript","boot.scr");
@@ -708,7 +709,7 @@ ethaddr=${ethaddr} ${netbsd_netconfig}");
 	"for device_name in usb mmc ide ; do "
 		"for partition in 0 1; do "
 			"for directory  in / /boot/;do "
-				"for fstype in ext2 fat; do "
+				"for fstype in ext4 fat; do "
 					"echo ===> Executing ${fstype}load ${device_name} 0:${partition} ${loadaddr} ${directory}${bootscript};"
 					"if itest.s $device_name -eq mmc; then if itest.s $mmc_started -ne 1; then mmcinfo;   setenv mmc_started '1';fi;fi;"
 					"if itest.s $device_name -eq usb; then if itest.s $usb_started -ne 1; then usb start; setenv usb_started '1';fi;fi;"
@@ -798,13 +799,13 @@ root=ubi0:rootfs rootfstype=ubifs rw usb0Mode=${usb0Mode} usb1Mode=${usb1Mode} \
 video=dovefb:lcd0:${lcd0_params},lcd1:${lcd1_params} clcd.lcd0_enable=${lcd0_enable} clcd.lcd1_enable=${lcd1_enable}; \
 bootm 0x2000000;");
 #endif
-                 
+#if 0 /* Why forcing bootdelay? */
        /* Set boodelay to 3 sec, if Monitor extension are disabled */
         if(!enaMonExt()){
                 setenv("bootdelay","3");
 		/* setenv("disaMvPnp","no"); */ /* allow disaMvPnp even not in monitor extension mode */
 	}
-
+#endif
 	/* Disable PNP config of Marvel memory controller devices. */
         env = getenv("disaMvPnp");
         if(!env)
