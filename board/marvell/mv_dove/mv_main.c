@@ -705,11 +705,15 @@ ethaddr=${ethaddr} ${netbsd_netconfig}");
 	setenv("mmc_started","0");
 	setenv("ide_started","0");
 	setenv("usb_started","0");
+	setenv("trydev", "usb mmc ide");
+	setenv("trypart", "1 2");
+	setenv("trydir", "/ /boot/");
+	setenv("tryfs", "ext4 fat");
 	setenv("bootcmd",
-	"for device_name in usb mmc ide ; do "
-		"for partition in 0 1; do "
-			"for directory  in / /boot/;do "
-				"for fstype in ext4 fat; do "
+	"for device_name in ${trydev} ; do "
+		"for partition in ${trypart} ; do "
+			"for directory  in ${trydir} ;do "
+				"for fstype in ${tryfs}; do "
 					"echo ===> Executing ${fstype}load ${device_name} 0:${partition} ${loadaddr} ${directory}${bootscript};"
 					"if itest.s $device_name -eq mmc; then if itest.s $mmc_started -ne 1; then mmcinfo;   setenv mmc_started '1';fi;fi;"
 					"if itest.s $device_name -eq usb; then if itest.s $usb_started -ne 1; then usb start; setenv usb_started '1';fi;fi;"
