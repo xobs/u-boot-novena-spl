@@ -37,7 +37,7 @@
 /************/
 /* VERSIONS */
 /************/
-#define CONFIG_IDENT_STRING	" Marvell version: 5.4.4 NQ"
+#define CONFIG_IDENT_STRING	" Marvell version: 5.4.4 NQ SR1"
 
 /* version number passing when loading Kernel */
 #define VER_NUM 0x09080000           /* 2009.08 */
@@ -344,7 +344,7 @@ if not?? #define CONFIG_LBA48
 #undef	CONFIG_BOOTARGS
 
 /* auto boot*/
-#define CONFIG_BOOTDELAY	3 		/* by default no autoboot */
+#define CONFIG_BOOTDELAY	1 		/* by default no autoboot */
 
 #if (CONFIG_BOOTDELAY >= 0)
 #define CONFIG_ROOTPATH	/mnt/ARM_FS/
