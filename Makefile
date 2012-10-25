@@ -302,7 +302,8 @@ DRAMREGS_SAMSUNG_1G = ./tools/doimage_dove/dramregs/dramregs_avng_x0_2cs_fast_ba
 DRAMREGS_SAMSUNG_2G = ./tools/doimage_dove/dramregs/dramregs_avng_x0_2cs_fast_bank_en_samsung_2Gb.txt
 DRAMREGS_1CS = ./tools/doimage_dove/dramregs/dramregs_db_x0_dec_6_1cs.txt
 DRAMREGS_2G_2CS = ./tools/doimage_dove/dramregs/dramregs_avng_a0_2cs_fast_bank_en_samsung_2Gb.txt
-DRAMREGS_CUBOX = ./tools/doimage_dove/dramregs/dramregs_cubox.txt
+DRAMREGS_CUBOX_1GB = ./tools/doimage_dove/dramregs/dramregs_cubox_1gb.txt
+DRAMREGS_CUBOX_2GB = ./tools/doimage_dove/dramregs/dramregs_cubox_2gb.txt
 ifeq ($(DRAM_256M),y)
 DRAMREGS_2CS = ./tools/doimage_dove/dramregs/dramregs_db_x0_dec_6_2cs_256mb.txt
 else
@@ -365,10 +366,14 @@ ifeq ($(CONFIG_DOVE),y)
 		endif
 		ifeq ($(DRAM),HYNIX_CUBOX)	
 			DO_IMAGE = ./tools/doimage -T flash -D 0x600000 -E 0x650000 \
-				-R $(DRAMREGS_CUBOX) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox$(MV_NAND_GANG_MODE)_spi.bin
-			DO_IMAGE_UART = ./tools/doimage -T uart -D 0x600000 -E 0x650000 \
-				-R $(DRAMREGS_CUBOX) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox$(MV_NAND_GANG_MODE)_uart.bin
+				-R $(DRAMREGS_CUBOX_1GB) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox_1GB$(MV_NAND_GANG_MODE)_spi.bin; \
+				   ./tools/doimage -T flash -D 0x600000 -E 0x650000 \
+				-R $(DRAMREGS_CUBOX_2GB) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox_2GB$(MV_NAND_GANG_MODE)_spi.bin
 
+			DO_IMAGE_UART = ./tools/doimage -T uart -D 0x600000 -E 0x650000 \
+				-R $(DRAMREGS_CUBOX_1GB) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox_1GB$(MV_NAND_GANG_MODE)_uart.bin; \
+				   ./tools/doimage -T uart -D 0x600000 -E 0x650000 \
+				-R $(DRAMREGS_CUBOX_2GB) u-boot.bin u-boot-$(MV_OUTPUT)_hynix_cubox_2GB$(MV_NAND_GANG_MODE)_uart.bin
 		endif
 	endif
 endif
