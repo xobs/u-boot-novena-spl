@@ -821,7 +821,11 @@ bootm 0x2000000;");
 	unsigned int xi, xj, xk, xl;
 	char ethaddr_0[30];
 	char ethaddr_1[30];
-
+#ifdef CUBOX
+	char ethaddr_spi[30];
+	char buffer[8];
+	int ethaddr_on_spi_flash;
+#endif
 	/* Read RTC to create pseudo-random data for enc */
 	struct rtc_time tm;
 
@@ -845,12 +849,28 @@ bootm 0x2000000;");
 
 	sprintf(ethaddr_0,"00:50:43:%02x:%02x:%02x",xk,xi,xj);
 	sprintf(ethaddr_1,"00:50:43:%02x:%02x:%02x",xl,xi,xj);
+#ifdef CUBOX
+	ethaddr_on_spi_flash = 0;
+	if (flash) {
+		/* Read from offset 832KB 8 bytes (0x000d0000) */
+		spi_flash_read(flash, 0x000d0000, 8, buffer);
+		sprintf(ethaddr_spi, "%02x:%02x:%02x:%02x:%02x:%02x",buffer[3],buffer[2],buffer[1],buffer[0],buffer[5],buffer[4]);
+		if ((buffer[6] == 0) && (buffer[7] == 0)) {
+			ethaddr_on_spi_flash = 1;
+		}
+	}
 
 	/* MAC addresses */
-        env = getenv("ethaddr");
-        if(!env)
-                setenv("ethaddr",ethaddr_0);
-
+	if (ethaddr_on_spi_flash)
+		/* Always override ethaddr with the MAC on the SPI flash */
+		setenv("ethaddr",ethaddr_spi);
+	else
+#endif
+	{
+		env = getenv("ethaddr");
+		if(!env)
+			setenv("ethaddr",ethaddr_0);
+	}
 #endif /*  (MV_INCLUDE_GIG_ETH) */
 
 #if defined(MV_INCLUDE_USB)

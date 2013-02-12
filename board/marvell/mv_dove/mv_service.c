@@ -108,4 +108,8 @@ MV_VOID mvEgigaPhySwitchInit(void)
 		mvEthE1116PhyBasicInit(0);
 		mvEthE1310PhyBasicInit(0);	
 	}
+	else if(RD_88AP510A0_CUBOX_ID == mvBoardIdGet())
+	{
+		mvEthE1310PhyBasicInit(0);
+	}
 }
