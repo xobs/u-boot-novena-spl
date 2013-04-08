@@ -181,7 +181,7 @@ void optimize_powerrails(void)
 {
 	/* Following is extremely dangerous to play with. Don't touch if you don't know what you are doing !!!! */
 	/* Set core (perihperals to 1.0 -5% */
-	printf ("Modifying CPU/CORE/DDR power rails to 1.0(-2.5%) / 1.0(-5%) / 1.5(-5%)\n");
+	printf ("Modifying CPU/CORE/DDR power rails to 1.0(+2.5%) / 1.0(-5%) / 1.5(-5%)\n");
 	mvPmuSelSDI(9);
 	mvPmuDvs(0xa, 0x9, 0x2, 0x5);
 	udelay(100*1000); /* 100mSec */
@@ -190,7 +190,7 @@ void optimize_powerrails(void)
 	udelay(100*1000); /* 100 mSec*/
 	/* Set CPU to 1.0V -2.5% */
 	mvPmuSelSDI(10);
-	mvPmuDvs(0xb, 0x9, 0x2, 0x5);
+	mvPmuDvs(0xc, 0x9, 0x2, 0x5);
 
 }
 MV_STATUS mvPmuWakeupEventSet (MV_U32 wkupEvents)
