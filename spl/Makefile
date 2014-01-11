@@ -64,6 +64,7 @@ LIBS-$(CONFIG_SPL_I2C_SUPPORT) += drivers/i2c/
 LIBS-$(CONFIG_SPL_GPIO_SUPPORT) += drivers/gpio/
 LIBS-$(CONFIG_SPL_MMC_SUPPORT) += drivers/mmc/
 LIBS-$(CONFIG_SPL_MPC8XXX_INIT_DDR_SUPPORT) += drivers/ddr/fsl/
+LIBS-$(CONFIG_SPL_SATA_SUPPORT) += drivers/block/libblock.o
 LIBS-$(CONFIG_SPL_SERIAL_SUPPORT) += drivers/serial/
 LIBS-$(CONFIG_SPL_SPI_FLASH_SUPPORT) += drivers/mtd/spi/
 LIBS-$(CONFIG_SPL_SPI_SUPPORT) += drivers/spi/
