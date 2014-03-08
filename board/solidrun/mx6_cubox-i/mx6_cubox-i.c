@@ -273,35 +273,6 @@ int board_phy_config(struct phy_device *phydev)
 	return 0;
 }
 
-int enable_fec_anatop_clock(void)
-{
-	u32 reg = 0;
-	s32 timeout = 100000;
-
-	struct anatop_regs __iomem *anatop =
-	(struct anatop_regs __iomem *)ANATOP_BASE_ADDR;
-
-	reg = readl(&anatop->pll_enet);
-	reg &= 0xfffffffc; /* Set PLL to generate 25MHz */
-	writel(reg, &anatop->pll_enet);
-	if ((reg & BM_ANADIG_PLL_ENET_POWERDOWN) ||
-	    (!(reg & BM_ANADIG_PLL_ENET_LOCK))) {
-		reg &= ~BM_ANADIG_PLL_ENET_POWERDOWN;
-		writel(reg, &anatop->pll_enet);
-		while (timeout--) {
-			if (readl(&anatop->pll_enet) & BM_ANADIG_PLL_ENET_LOCK)
-				break;
-		}
-		if (timeout < 0)
-			return -ETIMEDOUT;
-	}
-	/* Enable FEC clock */
-	reg |= BM_ANADIG_PLL_ENET_ENABLE;
-	reg &= ~BM_ANADIG_PLL_ENET_BYPASS;
-	writel(reg, &anatop->pll_enet);
-
-	return 0;
-}
 int board_eth_init(bd_t *bis)
 {
 	int ret;
@@ -312,7 +283,7 @@ int board_eth_init(bd_t *bis)
 	u32 reg = 0;
 	s32 timeout = 100000;
 
-	enable_fec_anatop_clock();
+	enable_fec_anatop_clock(ENET_25MHz);
 	/* set gpr1[21] */
         clrsetbits_le32(&iomuxc_regs->gpr[1], 0, (1 << 21));
 
