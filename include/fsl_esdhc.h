@@ -176,7 +176,11 @@ struct fsl_esdhc_cfg {
 
 #ifdef CONFIG_FSL_ESDHC
 int fsl_esdhc_mmc_init(bd_t *bis);
-int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg);
+struct mmc;
+int fsl_esdhc_initialize_withmmc(bd_t *bis, struct fsl_esdhc_cfg *cfg,
+                                 struct mmc *mmc);
+#define fsl_esdhc_initialize(bis, cfg) \
+	fsl_esdhc_initialize_withmmc(bis, cfg, NULL)
 void fdt_fixup_esdhc(void *blob, bd_t *bd);
 #else
 static inline int fsl_esdhc_mmc_init(bd_t *bis) { return -ENOSYS; }

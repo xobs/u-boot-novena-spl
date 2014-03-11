@@ -325,7 +325,6 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 
 	irqstat = esdhc_read32(&regs->irqstat);
 
-	/* Reset CMD and DATA portions on error */
 	if (irqstat & (CMD_ERR | IRQSTAT_CTOE)) {
 		esdhc_write32(&regs->sysctl, esdhc_read32(&regs->sysctl) |
 			      SYSCTL_RSTC);
@@ -341,8 +340,11 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 		}
 	}
 
-	if (irqstat & CMD_ERR)
+	if (irqstat & CMD_ERR) {
+		printf("SD has comm_err (cmd: %d)\n", cmd->cmdidx);
 		return COMM_ERR;
+	}
+	printf("Completed without error (cmd: %d)\n", cmd->cmdidx);
 
 	if (irqstat & IRQSTAT_CTOE)
 		return TIMEOUT;
@@ -390,8 +392,10 @@ esdhc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd, struct mmc_data *data)
 			if (irqstat & IRQSTAT_DTOE)
 				return TIMEOUT;
 
-			if (irqstat & DATA_ERR)
+			if (irqstat & DATA_ERR) {
+				printf("Block transfer error\n");
 				return COMM_ERR;
+			}
 		} while ((irqstat & DATA_COMPLETE) != DATA_COMPLETE);
 #endif
 		if (data->flags & MMC_DATA_READ)
@@ -520,16 +524,17 @@ static void esdhc_reset(struct fsl_esdhc *regs)
 		printf("MMC/SD: Reset never completed.\n");
 }
 
-int fsl_esdhc_initialize(bd_t *bis, struct fsl_esdhc_cfg *cfg)
+int fsl_esdhc_initialize_withmmc(bd_t *bis, struct fsl_esdhc_cfg *cfg,
+				 struct mmc *mmc)
 {
 	struct fsl_esdhc *regs;
-	struct mmc *mmc;
 	u32 caps, voltage_caps;
 
 	if (!cfg)
 		return -1;
 
-	mmc = malloc(sizeof(struct mmc));
+	if (!mmc)
+		mmc = malloc(sizeof(struct mmc));
 	if (!mmc)
 		return -ENOMEM;
 

@@ -151,11 +151,15 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	spl_board_init();
 #endif
 
+	puts("Calling spl_boot_device()...\n");
 	boot_device = spl_boot_device();
+	printf("spi boot device %d\n", boot_device);
 	debug("boot device - %d\n", boot_device);
+	printf("Switching\n");
 	switch (boot_device) {
 #ifdef CONFIG_SPL_RAM_DEVICE
 	case BOOT_DEVICE_RAM:
+		printf("Loading RAM image\n");
 		spl_ram_load_image();
 		break;
 #endif
@@ -163,69 +167,86 @@ void board_init_r(gd_t *dummy1, ulong dummy2)
 	case BOOT_DEVICE_MMC1:
 	case BOOT_DEVICE_MMC2:
 	case BOOT_DEVICE_MMC2_2:
+		printf("Loading MMC image\n");
 		spl_mmc_load_image();
 		break;
+#else
+#error "No SPL MMC support"
 #endif
 #ifdef CONFIG_SPL_NAND_SUPPORT
 	case BOOT_DEVICE_NAND:
+		printf("Loading NAND image\n");
 		spl_nand_load_image();
 		break;
 #endif
 #ifdef CONFIG_SPL_ONENAND_SUPPORT
 	case BOOT_DEVICE_ONENAND:
+		printf("Loading ONENAND image\n");
 		spl_onenand_load_image();
 		break;
 #endif
 #ifdef CONFIG_SPL_NOR_SUPPORT
 	case BOOT_DEVICE_NOR:
+		printf("Loading NOR image\n");
 		spl_nor_load_image();
 		break;
 #endif
 #ifdef CONFIG_SPL_YMODEM_SUPPORT
 	case BOOT_DEVICE_UART:
+		printf("Loading ymodem image\n");
 		spl_ymodem_load_image();
 		break;
 #endif
 #ifdef CONFIG_SPL_SPI_SUPPORT
 	case BOOT_DEVICE_SPI:
+		printf("Loading SPI image\n");
 		spl_spi_load_image();
 		break;
 #endif
 #ifdef CONFIG_SPL_ETH_SUPPORT
 	case BOOT_DEVICE_CPGMAC:
 #ifdef CONFIG_SPL_ETH_DEVICE
+		printf("Loading NET image\n");
 		spl_net_load_image(CONFIG_SPL_ETH_DEVICE);
 #else
+		printf("Loading OTHER NET image\n");
 		spl_net_load_image(NULL);
 #endif
 		break;
 #endif
 #ifdef CONFIG_SPL_USBETH_SUPPORT
 	case BOOT_DEVICE_USBETH:
+		printf("Loading USB NET image\n");
 		spl_net_load_image("usb_ether");
 		break;
 #endif
 #ifdef CONFIG_SPL_SATA_SUPPORT
 	case BOOT_DEVICE_SATA:
+		printf("Loading SATA image\n");
 		spl_sata_load_image();
 		break;
 #endif
 	default:
+		printf("Loading UNKNOWN image\n");
 		debug("SPL: Un-supported Boot Device\n");
 		hang();
 	}
 
+	printf("Loading OS image\n");
 	switch (spl_image.os) {
 	case IH_OS_U_BOOT:
+		printf("Loading U-Boot image\n");
 		debug("Jumping to U-Boot\n");
 		break;
 #ifdef CONFIG_SPL_OS_BOOT
 	case IH_OS_LINUX:
+		printf("Loading Linux image\n");
 		debug("Jumping to Linux\n");
 		spl_board_prepare_for_linux();
 		jump_to_image_linux((void *)CONFIG_SYS_SPL_ARGS_ADDR);
 #endif
 	default:
+		printf("Unsupported OS image\n");
 		debug("Unsupported OS image.. Jumping nevertheless..\n");
 	}
 	jump_to_image_no_args(&spl_image);

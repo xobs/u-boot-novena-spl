@@ -13,8 +13,36 @@
 #include <fat.h>
 #include <version.h>
 #include <image.h>
+#undef debug
+#define debug printf
 
 DECLARE_GLOBAL_DATA_PTR;
+
+#if 0
+static int my_printf(const char *fmt, ...)
+{
+        va_list args;
+        uint i;
+        char printbuffer[CONFIG_SYS_PBSIZE];
+
+#if !defined(CONFIG_SANDBOX) && !defined(CONFIG_PRE_CONSOLE_BUFFER)
+        if (!gd->have_console)
+                return 0;
+#endif
+
+        va_start(args, fmt);
+
+        /* For this to work, printbuffer must be larger than
+         * anything we ever want to print.
+         */
+        i = vscnprintf(printbuffer, sizeof(printbuffer), fmt, args);
+        va_end(args);
+
+        /* Print the string */
+        puts(printbuffer);
+        return i;
+}
+#endif
 
 static int mmc_load_image_raw(struct mmc *mmc, unsigned long sector)
 {
@@ -79,6 +107,7 @@ static int mmc_load_image_fat(struct mmc *mmc, const char *filename)
 						sizeof(struct image_header));
 
 	err = file_fat_read(filename, header, sizeof(struct image_header));
+	printf("Reading FAT load image %s: %d\n", filename, err);
 	if (err <= 0)
 		goto end;
 
@@ -103,6 +132,7 @@ static int mmc_load_image_fat_os(struct mmc *mmc)
 
 	err = file_fat_read(CONFIG_SPL_FAT_LOAD_ARGS_NAME,
 			    (void *)CONFIG_SYS_SPL_ARGS_ADDR, 0);
+	printf("Reading FAT OS image %s: %d\n", CONFIG_SPL_FAT_LOAD_ARGS_NAME, err);
 	if (err <= 0) {
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 		printf("spl: error reading image %s, err - %d\n",
@@ -123,25 +153,30 @@ void spl_mmc_load_image(void)
 	int err;
 	u32 boot_mode;
 
+	printf("Initializing MMC...\n");
 	mmc_initialize(gd->bd);
 	/* We register only one device. So, the dev id is always 0 */
+	printf("Finding MMC device 0...\n");
 	mmc = find_mmc_device(0);
 	if (!mmc) {
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 		puts("spl: mmc device not found!!\n");
 #endif
+		printf("MMC device not found!\n");
 		hang();
 	}
 
+	printf("Initting MMC...\n");
 	err = mmc_init(mmc);
 	if (err) {
 #ifdef CONFIG_SPL_LIBCOMMON_SUPPORT
 		printf("spl: mmc init failed: err - %d\n", err);
 #endif
+		printf("MMC init failed: %d\n", err);
 		hang();
 	}
 
-
+	puts("Determining SPL boot mode...\n");
 	boot_mode = spl_boot_mode();
 	switch (boot_mode) {
 		case MMCSD_MODE_RAW:
