@@ -180,25 +180,38 @@ void board_init_f(ulong dummy)
 	/* Set global data pointer. */
 	gd = &gdata;
 
-	/* This is needed to call usleep(), which is used in ddr3 */
-	timer_init();
-
-	novena_dram_init();
-
 	board_early_init_f();
 	preloader_console_init();
 
 	board_init_r(NULL, 0);
 }
 
+int spl_start_uboot(void)
+{
+	/* Yes, we should start U-Boot */
+        return 1;
+}
+
+void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
+{
+        typedef void __noreturn (*image_entry_noargs_t)(int r0, int r1, int r2);
+
+        image_entry_noargs_t image_entry =
+                        (image_entry_noargs_t) spl_image->entry_point;
+
+        printf("image entry point: 0x%X\n", spl_image->entry_point);
+        image_entry(gd->ram_size, 0, 0);
+}
+
 void spl_board_init(void)
 {
+	novena_dram_init();
+
 	setup_boot_device();
 }
 
 u32 spl_boot_device(void)
 {
-	puts("Boot Device: MMC1\n");
 	return BOOT_DEVICE_MMC1;
 /*
 	puts("Boot Device: ");

@@ -1026,7 +1026,6 @@ static uint32_t imx6qdl_ddr_init(struct i2c_pads_info *i2c_pad_info,
 	setup_i2c(0, CONFIG_SYS_I2C_SPEED, 0, i2c_pad_info);
 	i2c_init(CONFIG_SYS_I2C_SPEED, 0);
 
-	udelay(100000);
 	nbytes = length;
 	i = 0;
 	do {
@@ -1349,13 +1348,12 @@ static uint32_t imx6qdl_ddr_init(struct i2c_pads_info *i2c_pad_info,
 	 * that ddr3 is not broken
 	 */
 	debug("\nReference read/write test prior to tuning\n");
-	write_random_data(0);
-	read_random_data(0);
+	//write_random_data(0);
+	//read_random_data(0);
 
 	/* do write (fly-by) calibration */
 	debug("\nFly-by calibration\n");
 	errorcount = tune_wcal(0x04, NULL);
-	udelay(100000);
 
 	/* let it settle in...seems it's necessary */
 	if (errorcount != 0) {
@@ -1419,8 +1417,8 @@ static uint32_t imx6qdl_ddr_init(struct i2c_pads_info *i2c_pad_info,
 	 * Confirmation currently read out on terminal.
 	 */
 	debug("\nReference read/write test post-tuning\n");
-	write_random_data(0);
-	read_random_data(0);
+	//write_random_data(0);
+	//read_random_data(0);
 
 	ram_size = ((ddrSPD.capacity / 8) - 256) * 1024 * 1024;
 	debug("ddrSPD.capacity: %08x\n", ddrSPD.capacity);
@@ -1625,16 +1623,11 @@ uint32_t imx6dl_ddr_init(void)
 
 int novena_dram_init(void)
 {
-	int i;
-	uint32_t reg;
-	uint32_t old_reg;
-	void __iomem *ccmbase = (void *)CCM_BASE_ADDR;
-
 	if (is_cpu_type(MXC_CPU_MX6Q))
 		gd->ram_size = imx6q_ddr_init();
 	else
 		gd->ram_size = imx6dl_ddr_init();
-	printf("Detected RAM size: [%d MB]\n", gd->ram_size / 1024 / 1024);
+	printf("Detected RAM size: %d MB\n", gd->ram_size / 1024 / 1024);
 	return 0;
 }
 
