@@ -89,15 +89,16 @@ int board_mmc_init(bd_t *bis)
 	for (index = 0; index < CONFIG_SYS_FSL_USDHC_NUM; ++index) {
 		switch (index) {
 		case 0:
-			MX6QDL_SET_PAD(PAD_SD3_CLK__SD3_CLK   , MUX_PAD_CTRL(USDHC_PAD_CTRL));
+			MX6QDL_SET_PAD(PAD_SD3_CLK__SD3_CLK   , MUX_PAD_CTRL(USDHC_PAD_CLK_CTRL));
 			MX6QDL_SET_PAD(PAD_SD3_CMD__SD3_CMD   , MUX_PAD_CTRL(USDHC_PAD_CTRL));
 			MX6QDL_SET_PAD(PAD_SD3_DAT0__SD3_DATA0, MUX_PAD_CTRL(USDHC_PAD_CTRL));
 			MX6QDL_SET_PAD(PAD_SD3_DAT1__SD3_DATA1, MUX_PAD_CTRL(USDHC_PAD_CTRL));
 			MX6QDL_SET_PAD(PAD_SD3_DAT2__SD3_DATA2, MUX_PAD_CTRL(USDHC_PAD_CTRL));
 			MX6QDL_SET_PAD(PAD_SD3_DAT3__SD3_DATA3, MUX_PAD_CTRL(USDHC_PAD_CTRL));
+			usdhc_cfg[index].sdhc_clk = mxc_get_clock(MXC_ESDHC3_CLK);
 			break;
 		case 1:
-			MX6QDL_SET_PAD(PAD_SD2_CLK__SD2_CLK   , MUX_PAD_CTRL(USDHC_PAD_CTRL));
+			MX6QDL_SET_PAD(PAD_SD2_CLK__SD2_CLK   , MUX_PAD_CTRL(USDHC_PAD_CLK_CTRL));
 			MX6QDL_SET_PAD(PAD_SD2_CMD__SD2_CMD   , MUX_PAD_CTRL(USDHC_PAD_CTRL));
 			MX6QDL_SET_PAD(PAD_SD2_DAT0__SD2_DATA0, MUX_PAD_CTRL(USDHC_PAD_CTRL));
 			MX6QDL_SET_PAD(PAD_SD2_DAT1__SD2_DATA1, MUX_PAD_CTRL(USDHC_PAD_CTRL));
@@ -105,6 +106,8 @@ int board_mmc_init(bd_t *bis)
 			MX6QDL_SET_PAD(PAD_SD2_DAT3__SD2_DATA3, MUX_PAD_CTRL(USDHC_PAD_CTRL));
 			/* MicroSD Card Detect */
 			MX6QDL_SET_PAD(PAD_GPIO_4__GPIO1_IO04 , MUX_PAD_CTRL(NO_PAD_CTRL));
+			usdhc_cfg[index].sdhc_clk = mxc_get_clock(MXC_ESDHC2_CLK);
+
 			break;
 		default:
 			printf("Warning: you configured more USDHC controllers"
@@ -113,7 +116,6 @@ int board_mmc_init(bd_t *bis)
 			return status;
 		}
 
-		printf("Calling fsl_esdhc_initialize on %d\n", index);
 		status |= fsl_esdhc_initialize_withmmc(bis, &usdhc_cfg[index],
 			&usdhc_mmc[index]);
 	}

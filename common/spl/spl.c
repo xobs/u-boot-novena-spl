@@ -32,6 +32,9 @@ struct spl_image_info spl_image;
 /* Define board data structure */
 static bd_t bdata __attribute__ ((section(".data")));
 
+#undef debug
+#define debug printf
+
 /*
  * Default function to determine if u-boot or the OS should
  * be started. This implementation always returns 1.
@@ -101,14 +104,55 @@ void spl_parse_image_header(const struct image_header *header)
 	}
 }
 
+static int my_isprint(int c)
+{
+	if (c < 32 || c > 96)
+		return 0;
+	return 1;
+}
+
+int print_hex_offset(uint8_t *block, int count, int offset) {
+    int byte;
+    count += offset;
+    block -= offset;
+    for ( ; offset<count; offset+=16) {
+        printf("%08x ", offset);
+
+        for (byte=0; byte<16; byte++) {
+            if (byte == 8)
+                printf(" ");
+            if (offset+byte < count)
+                printf(" %02x", block[offset+byte]&0xff);
+            else
+                printf(" ");
+        }
+
+        printf(" |");
+        for (byte=0; byte<16 && byte+offset<count; byte++)
+            printf("%c", my_isprint(block[offset+byte]) ?
+                                    block[offset+byte] :
+                                    '.');
+        printf("|\n");
+    }
+    return 0;
+}
+
+int print_hex(uint8_t *block, int count) {
+    return print_hex_offset(block, count, 0);
+}
+
 __weak void __noreturn jump_to_image_no_args(struct spl_image_info *spl_image)
 {
+	int i;
 	typedef void __noreturn (*image_entry_noargs_t)(void);
 
 	image_entry_noargs_t image_entry =
 			(image_entry_noargs_t) spl_image->entry_point;
 
 	debug("image entry point: 0x%X\n", spl_image->entry_point);
+	print_hex(image_entry, 512);
+	for (i=0; i<128; i++)
+		printf("-");
 	image_entry();
 }
 
