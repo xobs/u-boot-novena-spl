@@ -210,6 +210,7 @@ static unsigned int mtb_to_cycles(unsigned int mtbs) {
 
 
 
+#ifdef CONFIG_PERFORM_RAM_TEST
 static int write_random_data(int bank)
 {
 	ulong	addr, writeval, count, feedback, sum1;
@@ -228,7 +229,7 @@ static int write_random_data(int bank)
 	size = 2;
 	sum1 = 0;
 
-	debug("16-bit writes @ 0x%08lx - 0x%08x / %u: ",
+	debug("16-bit writes @ 0x%08lx - 0x%08lx / %u: ",
 		addr, addr + (count * sizeof(addr)*size), sizeof(addr) * size);
 
 	while (count-- > 0) {
@@ -243,7 +244,7 @@ static int write_random_data(int bank)
 	return 0;
 }
 
-static int read_random_data(int bank)
+int read_random_data(int bank)
 {
 	ulong	addr, writeval, count, feedback, sum1, sum2;
 	int	size;
@@ -264,7 +265,7 @@ static int read_random_data(int bank)
 	count = 0x20000;
 	feedback = 0;
 
-	debug("16-bit reads @ 0x%08lx - 0x%08x / %u: ",
+	debug("16-bit reads @ 0x%08lx - 0x%08lx / %u: ",
 		addr, addr + (count * sizeof(addr)*size), sizeof(addr) * size);
 
 	while (count-- > 0) {
@@ -278,7 +279,7 @@ static int read_random_data(int bank)
 	debug("computed: %08lx, readback: %08lx\n", sum1, sum2);
 	return 0;
 }
-
+#endif /* CONFNIG_PERFORM_RAM_TEST */
 
 static int tune_wcal(int ddr_mr1, int *wldels)
 {
@@ -1347,9 +1348,11 @@ static uint32_t imx6qdl_ddr_init(struct i2c_pads_info *i2c_pad_info,
 	 * Write and read back some dummy data to demonstrate 
 	 * that ddr3 is not broken
 	 */
+#ifdef CONFIG_PERFORM_RAM_TEST
 	debug("\nReference read/write test prior to tuning\n");
-	//write_random_data(0);
-	//read_random_data(0);
+	write_random_data(0);
+	read_random_data(0);
+#endif
 
 	/* do write (fly-by) calibration */
 	debug("\nFly-by calibration\n");
@@ -1416,9 +1419,11 @@ static uint32_t imx6qdl_ddr_init(struct i2c_pads_info *i2c_pad_info,
 	 * Confirm that the memory is working by read/write demo.
 	 * Confirmation currently read out on terminal.
 	 */
+#ifdef CONFIG_PERFORM_RAM_TEST
 	debug("\nReference read/write test post-tuning\n");
-	//write_random_data(0);
-	//read_random_data(0);
+	write_random_data(0);
+	read_random_data(0);
+#endif
 
 	ram_size = ((ddrSPD.capacity / 8) - 256) * 1024 * 1024;
 	debug("ddrSPD.capacity: %08x\n", ddrSPD.capacity);
@@ -1627,7 +1632,7 @@ int novena_dram_init(void)
 		gd->ram_size = imx6q_ddr_init();
 	else
 		gd->ram_size = imx6dl_ddr_init();
-	printf("Detected RAM size: %d MB\n", gd->ram_size / 1024 / 1024);
+	printf("Detected RAM size: %lu MB\n", gd->ram_size / 1024 / 1024);
 	return 0;
 }
 
