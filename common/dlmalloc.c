@@ -1521,17 +1521,6 @@ void *sbrk(ptrdiff_t increment)
 	return (void *)old;
 }
 
-void mem_malloc_init(ulong start, ulong size)
-{
-	mem_malloc_start = start;
-	mem_malloc_end = start + size;
-	mem_malloc_brk = start;
-
-	memset((void *)mem_malloc_start, 0, size);
-
-	malloc_bin_reloc();
-}
-
 /* field-extraction macros */
 
 #define first(b) ((b)->fd)
@@ -1616,6 +1605,35 @@ static struct mallinfo current_mallinfo = {  0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 /* The total memory obtained from system via sbrk */
 #define sbrked_mem  (current_mallinfo.arena)
+
+void mem_malloc_init(ulong start, ulong size)
+{
+	mem_malloc_start = start;
+	mem_malloc_end = start + size;
+	mem_malloc_brk = start;
+
+	trim_threshold   = DEFAULT_TRIM_THRESHOLD;
+	top_pad          = DEFAULT_TOP_PAD;
+	n_mmaps_max      = DEFAULT_MMAP_MAX;
+	mmap_threshold   = DEFAULT_MMAP_THRESHOLD;
+
+	/* The first value returned from sbrk */
+	sbrk_base = (char*)(-1);
+
+	/* The maximum memory obtained from system via sbrk */
+	max_sbrked_mem = 0;
+
+	/* The maximum via either sbrk or mmap */
+	max_total_mem = 0;
+
+	/* internal working copy of mallinfo */
+	memset(&current_mallinfo, 0, sizeof(current_mallinfo));
+
+	memset((void *)mem_malloc_start, 0, size);
+
+	malloc_bin_reloc();
+}
+
 
 /* Tracking mmaps */
 
