@@ -23,9 +23,6 @@
 #undef CONFIG_SPL_LDSCRIPT
 #define CONFIG_SPL_LDSCRIPT     "board/$(BOARDDIR)/u-boot-spl-novena.lds"
 
-#undef CONFIG_SPL_MAX_SIZE
-#define CONFIG_SPL_MAX_SIZE (64 * 1024)
-
 #define CONFIG_MX6
 #define CONFIG_DISPLAY_CPUINFO
 #define CONFIG_DISPLAY_BOARDINFO
@@ -40,7 +37,7 @@
 #define CONFIG_REVISION_TAG
 
 /* Size of malloc() pool */
-#define CONFIG_SYS_MALLOC_LEN		(8 * SZ_1M)
+#define CONFIG_SYS_MALLOC_LEN		(1 * SZ_256K)
 
 #define CONFIG_BOARD_EARLY_INIT_F
 #define CONFIG_BOARD_LATE_INIT
