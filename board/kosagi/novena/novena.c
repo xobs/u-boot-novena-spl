@@ -58,8 +58,8 @@ DECLARE_GLOBAL_DATA_PTR;
 	PAD_CTL_SRE_FAST  | PAD_CTL_HYS)
 
 static struct fsl_esdhc_cfg usdhc_cfg[CONFIG_SYS_FSL_USDHC_NUM] = {
-	{USDHC3_BASE_ADDR},
 	{USDHC2_BASE_ADDR},
+	{USDHC3_BASE_ADDR},
 };
 
 static struct mmc usdhc_mmc[CONFIG_SYS_FSL_USDHC_NUM];
@@ -75,7 +75,7 @@ int board_mmc_getcd(struct mmc *mmc)
 	}
 	else {
 		gpio_direction_input(IMX_GPIO_NR(1, 4));
-		ret = !gpio_get_value(IMX_GPIO_NR(1, 4));
+		ret = 1; /* there is no CD for a microSD card */
 	}
 
 	return ret;

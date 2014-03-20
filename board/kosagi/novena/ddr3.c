@@ -1430,7 +1430,7 @@ static uint32_t imx6qdl_ddr_init(struct i2c_pads_info *i2c_pad_info,
 	debug("Ramsize according to SPD: %08x\n", ram_size);
 
 	/* Give the RAM some time to settle, otherwise it isn't ready */
-	udelay(1000);
+	udelay(100);
 
 	return ram_size;
 }
