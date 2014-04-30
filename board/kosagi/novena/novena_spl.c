@@ -35,6 +35,8 @@ DECLARE_GLOBAL_DATA_PTR;
 #define USR2            0x98            /* Status Register 2 */
 #define USR2_TXDC       (1 << 3)        /* Transmitter complete */
 
+extern int novena_dram_init(void);
+
 void PUTC_LL(int c)
 {
         void __iomem *base = (void *)CONFIG_MXC_UART_BASE;
@@ -164,7 +166,39 @@ static void spl_uart_init(void)
 	PUTC_LL('\n');
 }
 
-extern int novena_dram_init(void);
+/* Yank the FPGA "reset" GPIO, which frees the I2C bus */
+static void reset_fpga(void)
+{
+	u32 cpurev, imxtype;
+	iomux_v3_cfg_t const fpga_reset_pads_6q[] = {
+		MX6Q_PAD_DISP0_DAT13__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	};
+
+	iomux_v3_cfg_t const fpga_reset_pads_6dl[] = {
+		MX6DL_PAD_DISP0_DAT13__GPIO5_IO07 | MUX_PAD_CTRL(NO_PAD_CTRL),
+	};
+
+	cpurev = get_cpu_rev();
+	imxtype = (cpurev & 0xFF000) >> 12;
+
+	get_imx_type(imxtype);
+
+	switch (imxtype) {
+	case MXC_CPU_MX6Q:
+		imx_iomux_v3_setup_multiple_pads(fpga_reset_pads_6q,
+			ARRAY_SIZE(fpga_reset_pads_6q));
+		break;
+	case MXC_CPU_MX6DL:
+	default:
+		imx_iomux_v3_setup_multiple_pads(fpga_reset_pads_6dl,
+			ARRAY_SIZE(fpga_reset_pads_6dl));
+		break;
+	}
+
+	/* Pull FPGA reset line to 0, disabling power */
+	gpio_direction_output(IMX_GPIO_NR(5, 7), 0);
+}
+
 void board_init_f(ulong dummy)
 {
 	/* Set the stack pointer. */
